@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>pl.softwaremill.traffic</groupId>
+    <artifactId>traffic</artifactId>
+    <packaging>pom</packaging>
+    <name>traffic</name>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <properties>
+        <scala.version>2.8.1</scala.version>
+    </properties>
+
+    <dependencies>
+    </dependencies>
+
+    <modules>
+        <module>traffic-ui</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>ScalaToolsMaven2RepositoryReleases</id>
+            <name>Scala-Tools Maven2 Repository Releases</name>
+            <url>http://scala-tools.org/repo-releases/</url>
+        </repository>
+        <repository>
+            <id>ScalaToolsMaven2RepositorySnapshots</id>
+            <name>Scala-Tools Maven2 Repository Snapshots</name>
+            <url>http://scala-tools.org/repo-snapshots/</url>
+        </repository>
+        <repository>
+            <id>DatabinderRepository</id>
+            <name>Databinder Repository</name>
+            <url>http://databinder.net/repo/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>ScalaToolsMaven2RepositoryReleases</id>
+            <name>Scala-tools Maven2 Repository Releases</name>
+            <url>http://scala-tools.org/repo-releases/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Spec.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
