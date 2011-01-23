@@ -5,21 +5,21 @@ import org.scala_tools.time.Imports._
 import Span._
 import Acceleration._
 
-/**
- * @author Adam Warski (adam at warski dot org)
- */
 class Model
 
-case class Speed(meters: Span, seconds: Period)
+case class Speed(meters: Span, inTime: Period)
 
-trait Vehicle {
+trait VehicleSpecification {
   val width: Span
   val length: Span
   val acceleration: Acceleration
 }
 
-class Car extends Vehicle {
+object TypicalCar extends VehicleSpecification {
   val width = 1710 millimeters
   val length = 4490 millimeters
   val acceleration = 2.6.meters.perSecondSquared
+}
+
+case class Vehicle(val vs: VehicleSpecification, val x: Span, val y: Span, val cs: Speed) {
 }

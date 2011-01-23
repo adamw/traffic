@@ -3,7 +3,7 @@ package pl.softwaremill.traffic
 /**
  * @author Adam Warski (adam at warski dot org)
  */
-case class Span(mm: Long) {
+case class Span(val mm: Long) {
   def +(other: Span) = Span(mm + other.mm)
 }
 
