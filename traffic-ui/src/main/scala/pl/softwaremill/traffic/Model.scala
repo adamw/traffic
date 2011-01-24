@@ -1,6 +1,6 @@
 package pl.softwaremill.traffic
 
-import org.scala_tools.time.Imports._
+import org.joda.time._
 
 import Span._
 import Acceleration._
@@ -8,8 +8,12 @@ import Acceleration._
 object Model
 
 case class Speed(metersPerSecond: Span) {
+  def this(meters: Span, perPeriod: Period) = {
+    this(meters / perPeriod.toDurationFrom(new DateTime).getStandardSeconds)
+  }
+
   def *(period: Period): Span = {
-    metersPerSecond * (period.getMillis.toDouble / 1000)
+    metersPerSecond * (period.toDurationFrom(new DateTime).getMillis.toDouble / 1000)
   }
 }
 

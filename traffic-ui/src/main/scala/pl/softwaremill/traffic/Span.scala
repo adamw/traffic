@@ -3,6 +3,8 @@ package pl.softwaremill.traffic
 case class Span(mm: Long) {
   def +(other: Span) = Span(mm + other.mm)
   def *(by: Double) = Span((mm.toDouble * by).toLong)
+  def /(by: Int) = Span(mm / by)
+  def /(by: Long) = Span(mm / by)
 }
 
 object Span {

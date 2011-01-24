@@ -1,6 +1,6 @@
 package pl.softwaremill.traffic
 
-import org.joda.time.Period
+import org.scala_tools.time.Imports._
 
 object UIModel
 

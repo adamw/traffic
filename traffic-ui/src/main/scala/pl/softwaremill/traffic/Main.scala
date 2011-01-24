@@ -2,12 +2,10 @@ package pl.softwaremill.traffic
 
 import processing.core._
 import spde.core._
-import PConstants._
-import PApplet._
 
 import Span._
 import Direction._
-import org.joda.time.Period
+import org.scala_tools.time.Imports._
 
 object Main {
   def main(args: Array[String]) { PApplet.main(Array(classOf[Main].getName)) }
@@ -23,13 +21,14 @@ class Main extends ProxiedApplet {
     val gfx = Main.this
 
     val viewDefinition = new ViewDefinition {
-      val heightSpan = 50.meters
-      val widthSpan = 100.meters
+      val heightSpan = 100.meters
+      val widthSpan = 200.meters
       val heightPixels = 200
       val widthPixels = 600
     }
 
-    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, Speed(100.centimeters))) :: Nil
+    val initialVehicles = uiVehicle(
+      Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, new Speed(60.kilometers, 1.hour))) :: Nil
   }
 
   lazy val px = new DrawProxy(this) {
