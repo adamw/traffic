@@ -25,8 +25,11 @@ object TypicalCar extends VehicleSpecification {
   val acceleration = 2.6.meters.perSecondSquared
 }
 
-case class Vehicle(vs: VehicleSpecification, x: Span, y: Span, cs: Speed) {
+case class Vehicle(vs: VehicleSpecification, x: Span, y: Span, direction: Direction, currentSpeed: Speed) {
   def move(period: Period) = {
-    Vehicle(vs, x + cs*period, y, cs)
+    val distance = currentSpeed * period
+    val xDistance = distance * direction.cos
+    val yDistance = distance * direction.sin
+    Vehicle(vs, x + xDistance, y + yDistance, direction, currentSpeed)
   }
 }

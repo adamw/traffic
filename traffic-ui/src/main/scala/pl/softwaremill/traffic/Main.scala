@@ -6,6 +6,7 @@ import PConstants._
 import PApplet._
 
 import Span._
+import Direction._
 import org.joda.time.Period
 
 object Main {
@@ -28,7 +29,7 @@ class Main extends ProxiedApplet {
       val widthPixels = 600
     }
 
-    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, Speed(100.centimeters))) :: Nil
+    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, Speed(100.centimeters))) :: Nil
   }
 
   lazy val px = new DrawProxy(this) {
