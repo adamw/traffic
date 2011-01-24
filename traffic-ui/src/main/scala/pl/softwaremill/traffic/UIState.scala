@@ -8,6 +8,9 @@ trait UIStateComponent {
   val initialVehicles: List[UIVehicle]
 
   def uiState = currentState()
+  def updateState(state: UIState) {
+    currentState = () => state
+  }
 
   case class UIState(vehicles: List[UIVehicle])
 

@@ -2,6 +2,7 @@ package pl.softwaremill.traffic
 
 case class Span(mm: Long) {
   def +(other: Span) = Span(mm + other.mm)
+  def *(by: Double) = Span((mm.toDouble * by).toLong)
 }
 
 object Span {

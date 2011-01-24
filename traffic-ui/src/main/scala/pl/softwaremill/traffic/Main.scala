@@ -28,7 +28,7 @@ class Main extends ProxiedApplet {
       val widthPixels = 600
     }
 
-    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, null)) :: Nil
+    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, Speed(100.centimeters))) :: Nil
   }
 
   lazy val px = new DrawProxy(this) {
@@ -52,7 +52,7 @@ trait GfxComponent {
 }
 
 trait RunnerComponent {
-  this: UIStateComponent with GfxComponent =>
+  this: UIStateComponent with GfxComponent with UIVehicleComponent =>
 
   val runner = new Runner
 
@@ -62,7 +62,7 @@ trait RunnerComponent {
         vehicle.draw()
       }
 
-      uiState.vehicles.map(_.move(period))
+      updateState(UIState(uiState.vehicles.map(_.move(period))))
     }
   }
 }

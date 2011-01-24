@@ -7,7 +7,11 @@ import Acceleration._
 
 object Model
 
-case class Speed(meters: Span, inTime: Period)
+case class Speed(metersPerSecond: Span) {
+  def *(period: Period): Span = {
+    metersPerSecond * (period.getMillis.toDouble / 1000)
+  }
+}
 
 trait VehicleSpecification {
   val width: Span
@@ -23,7 +27,6 @@ object TypicalCar extends VehicleSpecification {
 
 case class Vehicle(vs: VehicleSpecification, x: Span, y: Span, cs: Speed) {
   def move(period: Period) = {
-
-    Vehicle(vs, x, y, cs)
+    Vehicle(vs, x + cs*period, y, cs)
   }
 }
