@@ -13,26 +13,25 @@ object Main {
 
 class Main extends ProxiedApplet {
   val env = new RunnerComponent
-          with UIStateComponent
           with GfxComponent
           with ViewDefinitionComponent
           with SpanToPixelsTranslatorComponent
-          with UIVehicleComponent {
+          with UIVehicleComponent
+          with UIStateComponent {
     val gfx = Main.this
 
     val viewDefinition = new ViewDefinition {
-      val heightSpan = 100.meters
-      val widthSpan = 300.meters
+      val heightSpan = 50.meters
+      val widthSpan = 100.meters
       val heightPixels = 200
       val widthPixels = 600
     }
 
-    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 100.meters, 100.meters, null)) :: Nil
+    val initialVehicles = uiVehicle(Vehicle(TypicalCar, 10.meters, 10.meters, null)) :: Nil
   }
 
   lazy val px = new DrawProxy(this) {
     size(env.viewDefinition.widthPixels, env.viewDefinition.heightPixels)
-
     frameRate = 20
 
     def draw {

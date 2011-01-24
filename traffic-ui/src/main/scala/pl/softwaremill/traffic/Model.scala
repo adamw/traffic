@@ -5,7 +5,7 @@ import org.scala_tools.time.Imports._
 import Span._
 import Acceleration._
 
-class Model
+object Model
 
 case class Speed(meters: Span, inTime: Period)
 
@@ -21,5 +21,4 @@ object TypicalCar extends VehicleSpecification {
   val acceleration = 2.6.meters.perSecondSquared
 }
 
-case class Vehicle(val vs: VehicleSpecification, val x: Span, val y: Span, val cs: Speed) {
-}
+case class Vehicle(vs: VehicleSpecification, x: Span, y: Span, cs: Speed)
