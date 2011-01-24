@@ -6,6 +6,7 @@ import PConstants._
 import PApplet._
 
 import Span._
+import org.joda.time.Period
 
 object Main {
   def main(args: Array[String]) { PApplet.main(Array(classOf[Main].getName)) }
@@ -34,8 +35,14 @@ class Main extends ProxiedApplet {
     size(env.viewDefinition.widthPixels, env.viewDefinition.heightPixels)
     frameRate = 20
 
+    var lastDraw = 0L
+
     def draw {
-      env.runner.step
+      val now = System.currentTimeMillis
+      if (lastDraw == 0L) lastDraw = now
+      env.runner.step(Period.millis((now-lastDraw).toInt))
+
+      lastDraw = now
     }
   }
 }
@@ -50,10 +57,12 @@ trait RunnerComponent {
   val runner = new Runner
 
   class Runner {
-    def step {
+    def step(period: Period) {
       for (vehicle <- uiState.vehicles) {
         vehicle.draw()
       }
+
+      uiState.vehicles.map(_.move(period))
     }
   }
 }

@@ -1,5 +1,7 @@
 package pl.softwaremill.traffic
 
+import org.joda.time.Period
+
 object UIModel
 
 trait UIVehicleComponent {
@@ -14,5 +16,7 @@ trait UIVehicleComponent {
       val (w, h) = spanToPixelsTranslator.translate((v.vs.length, v.vs.width))
       gfx.rect(x, y, w, h)
     }
+
+    def move(period: Period) = uiVehicle(v.move(period))
   }
 }
