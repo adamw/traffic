@@ -3,8 +3,6 @@ package pl.softwaremill.traffic
 object SimulationState
 
 trait SimulationStateComponent {
-  this: InitialStateComponent =>
-
   def state = currentState
   def updateState(state: SimulationState) {
     currentState = state
@@ -12,9 +10,6 @@ trait SimulationStateComponent {
 
   case class SimulationState(vehicles: List[Vehicle])
 
-  private var currentState = SimulationState(initialVehicles)
+  private var currentState = SimulationState(Nil)
 }
 
-trait InitialStateComponent {
-  val initialVehicles: List[Vehicle]
-}
