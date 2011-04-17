@@ -8,7 +8,7 @@ import Acceleration._
 object Model
 
 case class Speed(metersPerSecond: Span) {
-  def this(meters: Span, perPeriod: Period) = {
+  def this(meters: Span, perPeriod: Period) {
     this(meters / perPeriod.toDurationFrom(new DateTime).getStandardSeconds)
   }
 
