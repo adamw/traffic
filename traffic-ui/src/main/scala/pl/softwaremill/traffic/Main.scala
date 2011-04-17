@@ -57,6 +57,8 @@ trait RunnerComponent {
 
   class Runner {
     def step(period: Period) {
+      gfx.background(100);
+
       for (vehicle <- state.vehicles) {
         vehicle.draw()
       }
