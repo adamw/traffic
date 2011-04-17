@@ -17,7 +17,7 @@ class Main extends ProxiedApplet {
           with ViewDefinitionComponent
           with SpanToPixelsTranslatorComponent
           with UIVehicleComponent
-          with UIStateComponent {
+          with SimulationStateComponent {
     val gfx = Main.this
 
     val viewDefinition = new ViewDefinition {
@@ -27,17 +27,16 @@ class Main extends ProxiedApplet {
       val widthPixels = 600
     }
 
-    val initialVehicles = uiVehicle(
-      Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, new Speed(60.kilometers, 1.hour))) :: Nil
+    val initialVehicles = Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, new Speed(60.kilometers, 1.hour)) :: Nil
   }
 
   lazy val px = new DrawProxy(this) {
     size(env.viewDefinition.widthPixels, env.viewDefinition.heightPixels)
-    frameRate = 20
+    frameRate = 20f
 
     var lastDraw = 0L
 
-    def draw {
+    def draw() {
       val now = System.currentTimeMillis
       if (lastDraw == 0L) lastDraw = now
       env.runner.step(Period.millis((now-lastDraw).toInt))
@@ -52,17 +51,17 @@ trait GfxComponent {
 }
 
 trait RunnerComponent {
-  this: UIStateComponent with GfxComponent with UIVehicleComponent =>
+  this: SimulationStateComponent with GfxComponent with UIVehicleComponent =>
 
   val runner = new Runner
 
   class Runner {
     def step(period: Period) {
-      for (vehicle <- uiState.vehicles) {
+      for (vehicle <- state.vehicles) {
         vehicle.draw()
       }
 
-      updateState(UIState(uiState.vehicles.map(_.move(period))))
+      updateState(SimulationState(state.vehicles.map(_.move(period))))
     }
   }
 }
