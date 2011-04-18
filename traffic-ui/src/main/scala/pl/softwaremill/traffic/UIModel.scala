@@ -2,7 +2,7 @@ package pl.softwaremill.traffic
 
 object UIModel
 
-trait UIVehicleComponent {
+trait UIModelComponent {
   this: GfxComponent with SpanToPixelsTranslatorComponent =>
 
   case class UIVehicle(v: Vehicle) {
@@ -15,4 +15,12 @@ trait UIVehicleComponent {
   }
 
   implicit def vehicleToUIVehicle(v: Vehicle) = UIVehicle(v)
+
+  case class UIBarrier(b: Barrier) {
+    def draw() {
+
+    }
+  }
+
+  implicit def barrierToUIBarrier(b: Barrier) = UIBarrier(b)
 }

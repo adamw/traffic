@@ -29,7 +29,7 @@ class Main extends ProxiedApplet {
           with GfxComponentConfigured
           with ViewDefinitionComponentConfigured
           with SpanToPixelsTranslatorComponent
-          with UIVehicleComponent
+          with UIModelComponent
           with SimulationStateComponent
 
   env.updateState(env.SimulationState(
@@ -57,7 +57,7 @@ trait GfxComponent {
 }
 
 trait RunnerComponent {
-  this: SimulationStateComponent with GfxComponent with UIVehicleComponent =>
+  this: SimulationStateComponent with GfxComponent with UIModelComponent =>
 
   val runner = new Runner
 

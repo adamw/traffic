@@ -27,3 +27,5 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
     Vehicle(vs, p + (xDistance, yDistance), direction, currentSpeed)
   }
 }
+
+case class Barrier(leftTop: Position, bottomRight: Position)
