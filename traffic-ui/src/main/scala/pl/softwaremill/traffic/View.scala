@@ -19,9 +19,9 @@ trait SpanToPixelsTranslatorComponent {
   val spanToPixelsTranslator = new SpanToPixelsTranslator
 
   class SpanToPixelsTranslator {
-    def translate(pos: (Span, Span)): (Int, Int) = {
-      val posX = translateToScale(pos._1.mm, viewDefinition.widthSpan.mm, viewDefinition.widthPixels)
-      val posY = translateToScale(pos._2.mm, viewDefinition.heightSpan.mm, viewDefinition.heightPixels)
+    def translate(pos: Position): (Int, Int) = {
+      val posX = translateToScale(pos.x.mm, viewDefinition.widthSpan.mm, viewDefinition.widthPixels)
+      val posY = translateToScale(pos.y.mm, viewDefinition.heightSpan.mm, viewDefinition.heightPixels)
       (posX, posY)
     }
 

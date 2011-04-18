@@ -70,3 +70,7 @@ case class Position(x: Span, y: Span) {
   def +(other: Position) = Position(x + other.x, y + other.y)
   def +(other: (Span, Span)): Position = this.+(Position(other._1, other._2))
 }
+
+object Position {
+  implicit def spansToPosition(pair: (Span, Span)) = Position(pair._1, pair._2)
+}
