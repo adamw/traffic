@@ -34,7 +34,8 @@ class Main extends ProxiedApplet {
 
   env.updateState(env.SimulationState(
     Vehicle(TypicalCar, Position(10.meters, 10.meters), 0.degrees, Speed(60.kilometers, 1.hour)) ::
-    Vehicle(TypicalCar, Position(10.meters, 20.meters), 0.degrees, Speed(30.kilometers, 1.hour)) :: Nil))
+    Vehicle(TypicalCar, Position(10.meters, 20.meters), 0.degrees, Speed(30.kilometers, 1.hour)) :: Nil,
+    Barrier(Position(40.meters, 5.meters), Position(40.meters, 25.meters)) :: Nil))
 
   lazy val px = new DrawProxy(this) {
     size(env.viewDefinition.widthPixels, env.viewDefinition.heightPixels)
@@ -69,7 +70,11 @@ trait RunnerComponent {
         vehicle.draw()
       }
 
-      updateState(SimulationState(state.vehicles.map(_.move(period))))
+      for (barrier <- state.barriers) {
+        barrier.draw()
+      }
+
+      updateState(SimulationState(state.vehicles.map(_.move(period)), state.barriers))
     }
   }
 }

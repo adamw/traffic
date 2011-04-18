@@ -8,8 +8,8 @@ trait SimulationStateComponent {
     currentState = state
   }
 
-  case class SimulationState(vehicles: List[Vehicle])
+  case class SimulationState(vehicles: List[Vehicle], barriers: List[Barrier])
 
-  private var currentState = SimulationState(Nil)
+  private var currentState = SimulationState(Nil, Nil)
 }
 
