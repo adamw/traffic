@@ -33,8 +33,8 @@ class Main extends ProxiedApplet {
           with SimulationStateComponent
 
   env.updateState(env.SimulationState(
-    Vehicle(TypicalCar, 10.meters, 10.meters, 0.degrees, new Speed(60.kilometers, 1.hour)) ::
-    Vehicle(TypicalCar, 10.meters, 20.meters, 0.degrees, new Speed(30.kilometers, 1.hour)) :: Nil))
+    Vehicle(TypicalCar, Position(10.meters, 10.meters), 0.degrees, Speed(60.kilometers, 1.hour)) ::
+    Vehicle(TypicalCar, Position(10.meters, 20.meters), 0.degrees, Speed(30.kilometers, 1.hour)) :: Nil))
 
   lazy val px = new DrawProxy(this) {
     size(env.viewDefinition.widthPixels, env.viewDefinition.heightPixels)

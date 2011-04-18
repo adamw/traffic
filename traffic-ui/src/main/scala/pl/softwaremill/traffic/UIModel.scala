@@ -8,7 +8,7 @@ trait UIVehicleComponent {
   case class UIVehicle(v: Vehicle) {
     def draw() {
       gfx.stroke(0)
-      val (x, y) = spanToPixelsTranslator.translate((v.x, v.y))
+      val (x, y) = spanToPixelsTranslator.translate((v.p.x, v.p.y))
       val (w, h) = spanToPixelsTranslator.translate((v.vs.length, v.vs.width))
       gfx.rect(x, y, w, h)
     }

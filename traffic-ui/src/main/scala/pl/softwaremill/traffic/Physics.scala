@@ -55,11 +55,18 @@ object Direction {
 }
 
 case class Speed(metersPerSecond: Span) {
-  def this(meters: Span, perPeriod: Period) {
-    this(meters / perPeriod.toDurationFrom(new DateTime).getStandardSeconds)
-  }
-
   def *(period: Period): Span = {
     metersPerSecond * (period.toDurationFrom(new DateTime).getMillis.toDouble / 1000)
   }
+}
+
+object Speed {
+  def apply(meters: Span, perPeriod: Period): Speed = {
+    Speed(meters / perPeriod.toDurationFrom(new DateTime).getStandardSeconds)
+  }
+}
+
+case class Position(x: Span, y: Span) {
+  def +(other: Position) = Position(x + other.x, y + other.y)
+  def +(other: (Span, Span)): Position = this.+(Position(other._1, other._2))
 }
