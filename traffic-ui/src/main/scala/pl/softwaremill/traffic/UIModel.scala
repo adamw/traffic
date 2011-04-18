@@ -5,7 +5,11 @@ object UIModel
 trait UIModelComponent {
   this: GfxComponent with SpanToPixelsTranslatorComponent =>
 
-  case class UIVehicle(v: Vehicle) {
+  trait UIModelObject {
+    def draw()
+  }
+
+  case class UIVehicle(v: Vehicle) extends UIModelObject {
     def draw() {
       gfx.stroke(0)
       val (x, y) = spanToPixelsTranslator.translate((v.p.x, v.p.y))
@@ -14,13 +18,17 @@ trait UIModelComponent {
     }
   }
 
-  implicit def vehicleToUIVehicle(v: Vehicle) = UIVehicle(v)
-
-  case class UIBarrier(b: Barrier) {
+  case class UIBarrier(b: Barrier) extends UIModelObject {
     def draw() {
 
     }
   }
 
+  implicit def vehicleToUIVehicle(v: Vehicle) = UIVehicle(v)
   implicit def barrierToUIBarrier(b: Barrier) = UIBarrier(b)
+
+  implicit def modelObjectToUIModelObject(o: ModelObject): UIModelObject = o match {
+    case o: Vehicle => o
+    case o: Barrier => o
+  }
 }

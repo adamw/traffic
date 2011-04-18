@@ -66,12 +66,8 @@ trait RunnerComponent {
     def step(period: Period) {
       gfx.background(100);
 
-      for (vehicle <- state.vehicles) {
-        vehicle.draw()
-      }
-
-      for (barrier <- state.barriers) {
-        barrier.draw()
+      for (modelObject <- state.objects) {
+        modelObject.draw()
       }
 
       updateState(SimulationState(state.vehicles.map(_.move(period)), state.barriers))

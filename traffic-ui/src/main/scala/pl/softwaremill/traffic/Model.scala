@@ -7,6 +7,8 @@ import Acceleration._
 
 object Model
 
+sealed abstract case class ModelObject
+
 trait VehicleSpecification {
   val width: Span
   val length: Span
@@ -19,7 +21,7 @@ object TypicalCar extends VehicleSpecification {
   val acceleration = 2.6.meters.perSecondSquared
 }
 
-case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, currentSpeed: Speed) {
+case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, currentSpeed: Speed) extends ModelObject {
   def move(period: Period) = {
     val distance = currentSpeed * period
     val xDistance = distance * direction.cos
@@ -28,4 +30,4 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
   }
 }
 
-case class Barrier(leftTop: Position, bottomRight: Position)
+case class Barrier(leftTop: Position, bottomRight: Position) extends ModelObject
