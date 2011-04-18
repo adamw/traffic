@@ -7,16 +7,6 @@ import Acceleration._
 
 object Model
 
-case class Speed(metersPerSecond: Span) {
-  def this(meters: Span, perPeriod: Period) {
-    this(meters / perPeriod.toDurationFrom(new DateTime).getStandardSeconds)
-  }
-
-  def *(period: Period): Span = {
-    metersPerSecond * (period.toDurationFrom(new DateTime).getMillis.toDouble / 1000)
-  }
-}
-
 trait VehicleSpecification {
   val width: Span
   val length: Span
