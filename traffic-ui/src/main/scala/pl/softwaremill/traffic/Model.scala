@@ -30,4 +30,4 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
   }
 }
 
-case class Barrier(leftTop: Position, bottomRight: Position) extends ModelObject
+case class Barrier(topLeft: Position, bottomRight: Position) extends ModelObject

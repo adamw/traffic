@@ -12,6 +12,7 @@ trait UIModelComponent {
   case class UIVehicle(v: Vehicle) extends UIModelObject {
     def draw() {
       gfx.stroke(0)
+      gfx.fill(255)
       val (x, y) = spanToPixelsTranslator.translate((v.p.x, v.p.y))
       val (w, h) = spanToPixelsTranslator.translate((v.vs.length, v.vs.width))
       gfx.rect(x, y, w, h)
@@ -20,7 +21,11 @@ trait UIModelComponent {
 
   case class UIBarrier(b: Barrier) extends UIModelObject {
     def draw() {
-
+      gfx.stroke(0)
+      gfx.fill(0)
+      val (x1, y1) = spanToPixelsTranslator.translate(b.topLeft)
+      val (x2, y2) = spanToPixelsTranslator.translate(b.bottomRight)
+      gfx.rect(x1, y1, x2-x1, y2-y1)
     }
   }
 
