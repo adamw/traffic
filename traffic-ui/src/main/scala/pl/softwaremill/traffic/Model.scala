@@ -30,4 +30,11 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
   }
 }
 
-case class Barrier(topLeft: Position, bottomRight: Position) extends ModelObject
+case class Barrier(topLeft: Position, bottomRight: Position, state: Barrier.State) extends ModelObject
+
+object Barrier {
+  sealed abstract case class State
+
+  case object Red extends State
+  case object Green extends State
+}
