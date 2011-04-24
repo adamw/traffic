@@ -25,7 +25,7 @@ class Main extends ProxiedApplet {
     val gfx = Main.this
   }
 
-  val env = new RunnerComponent
+  val env = new DrawerComponent
           with MouseEventsComponent
           with GfxComponentConfigured
           with ViewDefinitionComponentConfigured
@@ -47,7 +47,7 @@ class Main extends ProxiedApplet {
     def draw() {
       val now = System.currentTimeMillis
       if (lastDraw == 0L) lastDraw = now
-      env.runner.step(Period.millis((now-lastDraw).toInt))
+      env.drawer.step(Period.millis((now-lastDraw).toInt))
 
       lastDraw = now
     }
@@ -62,12 +62,12 @@ trait GfxComponent {
   val gfx: PApplet
 }
 
-trait RunnerComponent {
+trait DrawerComponent {
   this: SimulationStateComponent with GfxComponent with UIModelComponent =>
 
-  val runner = new Runner
+  val drawer = new Drawer
 
-  class Runner {
+  class Drawer {
     def step(period: Period) {
       gfx.background(255);
 
