@@ -64,7 +64,7 @@ trait RunnerComponent {
 
   class Runner {
     def step(period: Period) {
-      gfx.background(100);
+      gfx.background(255);
 
       for (modelObject <- state.objects) {
         modelObject.draw()
