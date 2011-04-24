@@ -26,6 +26,7 @@ class Main extends ProxiedApplet {
   }
 
   val env = new RunnerComponent
+          with MouseEventsComponent
           with GfxComponentConfigured
           with ViewDefinitionComponentConfigured
           with SpanToPixelsTranslatorComponent
@@ -50,6 +51,10 @@ class Main extends ProxiedApplet {
 
       lastDraw = now
     }
+
+    override def mouseClicked() {
+      env.mouseEvents.mouseClicked(mouseX, mouseY)
+    }
   }
 }
 
@@ -71,6 +76,18 @@ trait RunnerComponent {
       }
 
       updateState(SimulationState(state.vehicles.map(_.move(period)), state.barriers))
+    }
+  }
+}
+
+trait MouseEventsComponent {
+  this: SimulationStateComponent with UIModelComponent =>
+
+  val mouseEvents = new MouseEvents
+
+  class MouseEvents {
+    def mouseClicked(x: Int, y: Int ) {
+      updateState(SimulationState(state.vehicles, state.barriers.map(_.switch)))
     }
   }
 }

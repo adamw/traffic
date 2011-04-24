@@ -30,10 +30,17 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
   }
 }
 
-case class Barrier(topLeft: Position, bottomRight: Position, state: Barrier.State) extends ModelObject
+case class Barrier(topLeft: Position, bottomRight: Position, state: Barrier.State) extends ModelObject {
+  def switch = Barrier(topLeft, bottomRight, state.switch)
+}
 
 object Barrier {
-  sealed abstract case class State
+  sealed abstract case class State {
+    def switch = this match {
+      case Red => Green
+      case Green => Red
+    }
+  }
 
   case object Red extends State
   case object Green extends State
