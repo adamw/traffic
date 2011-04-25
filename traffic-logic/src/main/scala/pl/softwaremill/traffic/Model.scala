@@ -7,7 +7,7 @@ import Acceleration._
 
 object Model
 
-sealed abstract case class ModelObject
+sealed abstract class ModelObject()
 
 trait VehicleSpecification {
   val width: Span
@@ -35,7 +35,7 @@ case class Barrier(topLeft: Position, bottomRight: Position, state: Barrier.Stat
 }
 
 object Barrier {
-  sealed abstract case class State {
+  sealed abstract class State() {
     def switch = this match {
       case Red => Green
       case Green => Red
