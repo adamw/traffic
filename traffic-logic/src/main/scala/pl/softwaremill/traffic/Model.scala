@@ -24,8 +24,8 @@ object TypicalCar extends VehicleSpecification {
 case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, currentSpeed: Speed) extends ModelObject {
   def move(period: Period) = {
     val distance = currentSpeed * period
-    val xDistance = distance * direction.cos
-    val yDistance = distance * direction.sin
+    val xDistance = distance * direction.sin
+    val yDistance = distance * direction.cos
     Vehicle(vs, p + (xDistance, yDistance), direction, currentSpeed)
   }
 }

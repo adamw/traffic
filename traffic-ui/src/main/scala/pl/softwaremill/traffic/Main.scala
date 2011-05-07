@@ -43,8 +43,8 @@ class Main extends ProxiedApplet {
             with SimulationObjectsComponentConfigured
 
     env.updateDynamic(env.DynamicSimulationObjects(
-      Vehicle(TypicalCar, Position(10.meters, 10.meters), 0.degrees, Speed(60.kilometers, 1.hour)) ::
-              Vehicle(TypicalCar, Position(10.meters, 20.meters), 0.degrees, Speed(30.kilometers, 1.hour)) :: Nil,
+      Vehicle(TypicalCar, Position(10.meters, 10.meters), 90.degrees, Speed(60.kilometers, 1.hour)) ::
+              Vehicle(TypicalCar, Position(10.meters, 20.meters), 90.degrees, Speed(30.kilometers, 1.hour)) :: Nil,
       Barrier(Position(40.meters, 5.meters), Position(41.meters, 25.meters), Barrier.Green) :: Nil))
 
     env
@@ -86,6 +86,10 @@ trait DrawerComponent {
   class Drawer {
     def step(period: Period) {
       gfx.background(255);
+
+      for (lane <- static) {
+        lane.draw()
+      }
 
       for (modelObject <- dynamic.objects) {
         modelObject.draw()
