@@ -28,15 +28,21 @@ class Main extends ProxiedApplet {
       val gfx = Main.this
     }
 
+    trait SimulationObjectsComponentConfigured extends SimulationObjectsComponent {
+      this: ViewDefinitionComponent =>
+
+      val static = Lane(Position(0.meters, viewDefinition.heightSpan/2), 0.degrees, 20.meters) :: Nil
+    }
+
     val env = new DrawerComponent
             with MouseEventsComponent
             with GfxComponentConfigured
             with ViewDefinitionComponentConfigured
             with SpanToPixelsTranslatorComponent
             with UIModelComponent
-            with SimulationStateComponent
+            with SimulationObjectsComponentConfigured
 
-    env.updateState(env.SimulationState(
+    env.updateDynamic(env.DynamicSimulationObjects(
       Vehicle(TypicalCar, Position(10.meters, 10.meters), 0.degrees, Speed(60.kilometers, 1.hour)) ::
               Vehicle(TypicalCar, Position(10.meters, 20.meters), 0.degrees, Speed(30.kilometers, 1.hour)) :: Nil,
       Barrier(Position(40.meters, 5.meters), Position(41.meters, 25.meters), Barrier.Green) :: Nil))
@@ -73,7 +79,7 @@ trait GfxComponent {
 }
 
 trait DrawerComponent {
-  this: SimulationStateComponent with GfxComponent with UIModelComponent =>
+  this: SimulationObjectsComponent with GfxComponent with UIModelComponent =>
 
   val drawer = new Drawer
 
@@ -81,23 +87,23 @@ trait DrawerComponent {
     def step(period: Period) {
       gfx.background(255);
 
-      for (modelObject <- state.objects) {
+      for (modelObject <- dynamic.objects) {
         modelObject.draw()
       }
 
-      updateState(SimulationState(state.vehicles.map(_.move(period)), state.barriers))
+      updateDynamic(DynamicSimulationObjects(dynamic.vehicles.map(_.move(period)), dynamic.barriers))
     }
   }
 }
 
 trait MouseEventsComponent {
-  this: SimulationStateComponent with UIModelComponent =>
+  this: SimulationObjectsComponent with UIModelComponent =>
 
   val mouseEvents = new MouseEvents
 
   class MouseEvents {
     def mouseClicked(x: Int, y: Int ) {
-      updateState(SimulationState(state.vehicles, state.barriers.map(_.switch)))
+      updateDynamic(DynamicSimulationObjects(dynamic.vehicles, dynamic.barriers.map(_.switch)))
     }
   }
 }

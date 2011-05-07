@@ -40,8 +40,17 @@ trait UIModelComponent {
     }
   }
 
+  case class UILane(l: Lane) extends UIModelObject {
+    def draw() {
+      gfx.stroke(0)
+      gfx.fill(0)
+
+    }
+  }
+
   implicit def vehicleToUIVehicle(v: Vehicle) = UIVehicle(v)
   implicit def barrierToUIBarrier(b: Barrier) = UIBarrier(b)
+  implicit def laneToUILane(l: Lane) = UILane(l)
 
   implicit def modelObjectToUIModelObject(o: ModelObject): UIModelObject = o match {
     case o: Vehicle => o

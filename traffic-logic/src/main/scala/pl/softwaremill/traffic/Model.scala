@@ -45,3 +45,5 @@ object Barrier {
   case object Red extends State
   case object Green extends State
 }
+
+case class Lane(axisStart: Position, direction: Direction, width: Span)
