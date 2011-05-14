@@ -31,14 +31,14 @@ class Main extends ProxiedApplet {
     trait SimulationObjectsComponentConfigured extends SimulationObjectsComponent {
       this: ViewDefinitionComponent =>
 
-      val static = Lane(Position(0.meters, viewDefinition.heightSpan/2), 0.degrees, 20.meters) :: Nil
+      val static = Lane(Position(0.meters, viewDefinition.heightSpan/2), 90.degrees, 20.meters, 1.kilometers) :: Nil
     }
 
     val env = new DrawerComponent
             with MouseEventsComponent
             with GfxComponentConfigured
             with ViewDefinitionComponentConfigured
-            with SpanToPixelsTranslatorComponent
+            with PositionToPixelsTranslatorComponent
             with UIModelComponent
             with SimulationObjectsComponentConfigured
 

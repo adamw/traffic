@@ -13,12 +13,12 @@ trait ViewDefinitionComponent {
   }
 }
 
-trait SpanToPixelsTranslatorComponent {
+trait PositionToPixelsTranslatorComponent {
   this: ViewDefinitionComponent =>
 
-  val spanToPixelsTranslator = new SpanToPixelsTranslator
+  val positionToPixelsTranslator = new PositionToPixelsTranslator
 
-  class SpanToPixelsTranslator {
+  class PositionToPixelsTranslator {
     def translate(pos: Position): (Int, Int) = {
       val posX = translateToScale(pos.x.mm, viewDefinition.widthSpan.mm, viewDefinition.widthPixels)
       val posY = translateToScale(pos.y.mm, viewDefinition.heightSpan.mm, viewDefinition.heightPixels)
