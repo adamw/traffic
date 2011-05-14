@@ -42,8 +42,10 @@ object Acceleration {
 }
 
 case class Direction(degrees: Double) {
-  def cos = scala.math.cos(toRadians(degrees))
-  def sin = scala.math.sin(toRadians(degrees))
+  val radians = toRadians(degrees)
+
+  def cos = scala.math.cos(radians)
+  def sin = scala.math.sin(radians)
 }
 
 object Direction {
