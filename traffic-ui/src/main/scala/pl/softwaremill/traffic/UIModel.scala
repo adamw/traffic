@@ -2,6 +2,8 @@ package pl.softwaremill.traffic
 
 import processing.core.PConstants
 
+import Span._
+
 object UIModel
 
 trait UIModelComponent {
@@ -19,24 +21,32 @@ trait UIModelComponent {
     }
   }
 
+  private val barrierWidthOffset = 1.meters
+  private val barrierHeight = 50.centimeters
+
   case class UIBarrier(b: Barrier) extends UIModelObject {
     def draw() {
       gfx.stroke(0)
       gfx.fill(0)
-      val (x1, y1) = (b.topLeft.x, b.topLeft.y)
-      val (x2, y2) = (b.bottomRight.x, b.bottomRight.y)
-      gfx.rect(x1, y1, x2-x1, y2-y1)
 
       val color = b.state match {
         case Barrier.Red => (255, 0, 0)
         case Barrier.Green => (0, 255, 0)
       }
 
-      val radius = (x2-x1).abs * 2
+      gfx.pushMatrix()
+
+      laneRelative(b.lane)
+
+      gfx.rect(- (b.lane.width/2 + barrierWidthOffset), - (b.fromStart), b.lane.width + barrierWidthOffset*2, barrierHeight)
+
+      val radius = 1.meters
 
       gfx.fill(color._1, color._2, color._3)
       gfx.ellipseMode(PConstants.RADIUS)
-      gfx.ellipse((x1+x2)/2, (y1+y2)/2, radius, radius)
+      gfx.ellipse(0, - (b.fromStart - barrierHeight/2), radius, radius)
+
+      gfx.popMatrix()
     }
   }
 
@@ -49,8 +59,7 @@ trait UIModelComponent {
       val halfWidth = l.width/2
 
       gfx.pushMatrix()
-      gfx.translate(l.axisStart.x, l.axisStart.y)
-      gfx.rotate(l.direction.radians.toFloat)
+      laneRelative(l)
       gfx.beginShape(PConstants.QUAD)
       gfx.vertex(- halfWidth, 0)
       gfx.vertex(halfWidth, 0)
@@ -59,6 +68,11 @@ trait UIModelComponent {
       gfx.endShape()
       gfx.popMatrix()
     }
+  }
+
+  private def laneRelative(l: Lane) {
+    gfx.translate(l.axisStart.x, l.axisStart.y)
+    gfx.rotate(l.direction.radians.toFloat)
   }
 
   implicit def vehicleToUIVehicle(v: Vehicle) = UIVehicle(v)

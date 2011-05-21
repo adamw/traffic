@@ -30,8 +30,8 @@ case class Vehicle(vs: VehicleSpecification, p: Position, direction: Direction, 
   }
 }
 
-case class Barrier(topLeft: Position, bottomRight: Position, state: Barrier.State) extends ModelObject {
-  def switch = Barrier(topLeft, bottomRight, state.switch)
+case class Barrier(lane: Lane, fromStart: Span, state: Barrier.State) extends ModelObject {
+  def switch = Barrier(lane, fromStart, state.switch)
 }
 
 object Barrier {
