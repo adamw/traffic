@@ -5,7 +5,7 @@ import processing.core.PConstants
 object UIModel
 
 trait UIModelComponent {
-  this: GfxComponent with PositionToPixelsTranslatorComponent with ViewDefinitionComponent =>
+  this: GfxComponent with ViewDefinitionComponent =>
 
   trait UIModelObject {
     def draw()
@@ -15,9 +15,7 @@ trait UIModelComponent {
     def draw() {
       gfx.stroke(0)
       gfx.fill(255)
-      val (x, y) = positionToPixelsTranslator.translate((v.p.x, v.p.y))
-      val (w, h) = positionToPixelsTranslator.translate((v.vs.length, v.vs.width))
-      gfx.rect(x, y, w, h)
+      gfx.rect(v.p.x, v.p.y, v.vs.length, v.vs.width)
     }
   }
 
@@ -25,8 +23,8 @@ trait UIModelComponent {
     def draw() {
       gfx.stroke(0)
       gfx.fill(0)
-      val (x1, y1) = positionToPixelsTranslator.translate(b.topLeft)
-      val (x2, y2) = positionToPixelsTranslator.translate(b.bottomRight)
+      val (x1, y1) = (b.topLeft.x, b.topLeft.y)
+      val (x2, y2) = (b.bottomRight.x, b.bottomRight.y)
       gfx.rect(x1, y1, x2-x1, y2-y1)
 
       val color = b.state match {
@@ -34,41 +32,24 @@ trait UIModelComponent {
         case Barrier.Green => (0, 255, 0)
       }
 
+      val radius = (x2-x1).abs * 2
+
       gfx.fill(color._1, color._2, color._3)
       gfx.ellipseMode(PConstants.RADIUS)
-      gfx.ellipse((x1+x2)/2, (y1+y2)/2, 4, 4)
+      gfx.ellipse((x1+x2)/2, (y1+y2)/2, radius, radius)
     }
   }
 
   case class UILane(l: Lane) extends UIModelObject {
     def draw() {
-      /*
-      With a 0-degree direction the lane goes upwards from the starting point:
-
-      *-----2
-      |     |
-      |     |
-      |     |
-      |     |
-      *--1--*
-
-      1 - axis start
-      2 - top-right corner: (width/2, -height)
-
-      */
-
-
       gfx.stroke(128)
       gfx.fill(128)
 
-      val width = l.width.mm.toFloat
-      val height = l.length.mm.toFloat
-      val halfWidth = width/2
+      val height = l.length
+      val halfWidth = l.width/2
 
       gfx.pushMatrix()
-      gfx.scale(viewDefinition.widthPixels.toFloat / viewDefinition.widthSpan.mm.toFloat,
-        viewDefinition.heightPixels.toFloat / viewDefinition.heightSpan.mm.toFloat)
-      gfx.translate(l.axisStart.x.mm, l.axisStart.y.mm)
+      gfx.translate(l.axisStart.x, l.axisStart.y)
       gfx.rotate(l.direction.radians.toFloat)
       gfx.beginShape(PConstants.QUAD)
       gfx.vertex(- halfWidth, 0)

@@ -13,20 +13,20 @@ trait ViewDefinitionComponent {
   }
 }
 
-trait PositionToPixelsTranslatorComponent {
-  this: ViewDefinitionComponent =>
+trait ToScaleComponent {
+  this: ViewDefinitionComponent with GfxComponent =>
 
-  val positionToPixelsTranslator = new PositionToPixelsTranslator
+  val toScale = new ToScale
 
-  class PositionToPixelsTranslator {
-    def translate(pos: Position): (Int, Int) = {
-      val posX = translateToScale(pos.x.mm, viewDefinition.widthSpan.mm, viewDefinition.widthPixels)
-      val posY = translateToScale(pos.y.mm, viewDefinition.heightSpan.mm, viewDefinition.heightPixels)
-      (posX, posY)
-    }
+  class ToScale {
+    def apply(block: => Unit) {
+      gfx.scale(viewDefinition.widthPixels.toFloat / viewDefinition.widthSpan.mm.toFloat,
+        viewDefinition.heightPixels.toFloat / viewDefinition.heightSpan.mm.toFloat)
+      gfx.pushMatrix()
 
-    private def translateToScale(current: Long, max: Long, maxScaled: Int): Int = {
-      ((current.toDouble / max.toDouble) * maxScaled.toDouble).toInt
+      block
+
+      gfx.popMatrix()
     }
   }
 }

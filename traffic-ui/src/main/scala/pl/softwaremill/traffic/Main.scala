@@ -38,9 +38,9 @@ class Main extends ProxiedApplet {
             with MouseEventsComponent
             with GfxComponentConfigured
             with ViewDefinitionComponentConfigured
-            with PositionToPixelsTranslatorComponent
             with UIModelComponent
             with SimulationObjectsComponentConfigured
+            with ToScaleComponent
 
     env.updateDynamic(env.DynamicSimulationObjects(
       Vehicle(TypicalCar, Position(10.meters, 10.meters), 90.degrees, Speed(60.kilometers, 1.hour)) ::
@@ -79,7 +79,7 @@ trait GfxComponent {
 }
 
 trait DrawerComponent {
-  this: SimulationObjectsComponent with GfxComponent with UIModelComponent =>
+  this: SimulationObjectsComponent with GfxComponent with UIModelComponent with ToScaleComponent =>
 
   val drawer = new Drawer
 
@@ -87,12 +87,14 @@ trait DrawerComponent {
     def step(period: Period) {
       gfx.background(255);
 
-      for (lane <- static) {
-        lane.draw()
-      }
+      toScale {
+        for (lane <- static) {
+          lane.draw()
+        }
 
-      for (modelObject <- dynamic.objects) {
-        modelObject.draw()
+        for (modelObject <- dynamic.objects) {
+          modelObject.draw()
+        }
       }
 
       updateDynamic(DynamicSimulationObjects(dynamic.vehicles.map(_.move(period)), dynamic.barriers))

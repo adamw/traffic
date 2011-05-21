@@ -29,6 +29,8 @@ object Span {
 
   implicit def intToRichInt(n: Int) = new RichInt(n)
   implicit def doubleToRichDouble(d: Double) = new RichDouble(d)
+
+  implicit def spanToFloat(span: Span) = span.mm.toFloat
 }
 
 case class Acceleration(metersPerSecondSquared: Double)
