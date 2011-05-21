@@ -5,7 +5,7 @@ import processing.core.PConstants
 object UIModel
 
 trait UIModelComponent {
-  this: GfxComponent with SpanToPixelsTranslatorComponent =>
+  this: GfxComponent with PositionToPixelsTranslatorComponent with ViewDefinitionComponent =>
 
   trait UIModelObject {
     def draw()
@@ -15,8 +15,8 @@ trait UIModelComponent {
     def draw() {
       gfx.stroke(0)
       gfx.fill(255)
-      val (x, y) = spanToPixelsTranslator.translate((v.p.x, v.p.y))
-      val (w, h) = spanToPixelsTranslator.translate((v.vs.length, v.vs.width))
+      val (x, y) = positionToPixelsTranslator.translate((v.p.x, v.p.y))
+      val (w, h) = positionToPixelsTranslator.translate((v.vs.length, v.vs.width))
       gfx.rect(x, y, w, h)
     }
   }
@@ -25,8 +25,8 @@ trait UIModelComponent {
     def draw() {
       gfx.stroke(0)
       gfx.fill(0)
-      val (x1, y1) = spanToPixelsTranslator.translate(b.topLeft)
-      val (x2, y2) = spanToPixelsTranslator.translate(b.bottomRight)
+      val (x1, y1) = positionToPixelsTranslator.translate(b.topLeft)
+      val (x2, y2) = positionToPixelsTranslator.translate(b.bottomRight)
       gfx.rect(x1, y1, x2-x1, y2-y1)
 
       val color = b.state match {
@@ -42,9 +42,41 @@ trait UIModelComponent {
 
   case class UILane(l: Lane) extends UIModelObject {
     def draw() {
-      gfx.stroke(0)
-      gfx.fill(0)
+      /*
+      With a 0-degree direction the lane goes upwards from the starting point:
 
+      *-----2
+      |     |
+      |     |
+      |     |
+      |     |
+      *--1--*
+
+      1 - axis start
+      2 - top-right corner: (width/2, -height)
+
+      */
+
+
+      gfx.stroke(128)
+      gfx.fill(128)
+
+      val width = l.width.mm.toFloat
+      val height = l.length.mm.toFloat
+      val halfWidth = width/2
+
+      gfx.pushMatrix()
+      gfx.scale(viewDefinition.widthPixels.toFloat / viewDefinition.widthSpan.mm.toFloat,
+        viewDefinition.heightPixels.toFloat / viewDefinition.heightSpan.mm.toFloat)
+      gfx.translate(l.axisStart.x.mm, l.axisStart.y.mm)
+      gfx.rotate(l.direction.radians.toFloat)
+      gfx.beginShape(PConstants.QUAD)
+      gfx.vertex(- halfWidth, 0)
+      gfx.vertex(halfWidth, 0)
+      gfx.vertex(halfWidth, - height)
+      gfx.vertex(- halfWidth, - height)
+      gfx.endShape()
+      gfx.popMatrix()
     }
   }
 

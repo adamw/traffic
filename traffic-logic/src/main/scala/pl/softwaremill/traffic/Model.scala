@@ -16,8 +16,8 @@ trait VehicleSpecification {
 }
 
 object TypicalCar extends VehicleSpecification {
-  val width = 1710 millimeters
-  val length = 4490 millimeters
+  val width = 1710.millimeters
+  val length = 4490.millimeters
   val acceleration = 2.6.meters.perSecondSquared
 }
 
