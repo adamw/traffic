@@ -57,6 +57,7 @@ class Main extends ProxiedApplet {
 
     TypicalCar.withSpeed(Speed(60.kilometers, 1.hour)).addToLane(lane1)
     TypicalCar.withSpeed(Speed(30.kilometers, 1.hour)).addToLane(lane1)
+    TypicalCar.withSpeed(Speed(0.kilometers, 1.hour)).addToLane(lane1)
   }
 
   def createDrawProxy(env: UIComponents) = {

@@ -4,8 +4,6 @@ import processing.core.PConstants
 
 import Span._
 
-object UIModel
-
 trait UIModelComponent {
   this: GfxComponent with ViewDefinitionComponent =>
 
@@ -17,7 +15,15 @@ trait UIModelComponent {
     def draw() {
       gfx.stroke(0)
       gfx.fill(255)
-      gfx.rect(v.p.x, v.p.y, v.vs.length, v.vs.width)
+
+      gfx.pushMatrix()
+
+      gfx.translate(v.p.x, v.p.y)
+      gfx.rotate(v.direction.radians.toFloat)
+
+      gfx.rect(- v.vs.width/2, 0, v.vs.width, v.vs.length)
+
+      gfx.popMatrix()
     }
   }
 
