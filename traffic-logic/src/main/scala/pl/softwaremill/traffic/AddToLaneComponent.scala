@@ -10,7 +10,7 @@ trait AddToLaneComponent {
 
   class AdderWithSpeed(vs: VehicleSpecification, s: Speed) {
     def addToLane(l: Lane) {
-      dynamic.addVehicle(Vehicle(vs, l.axisStart, l.direction, s))
+      dynamicObjects.addVehicle(Vehicle(vs, l.axisStart, l.direction, s))
     }
   }
 }

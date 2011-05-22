@@ -31,7 +31,7 @@ class Main extends ProxiedApplet {
     trait SimulationObjectsComponentConfigured extends SimulationObjectsComponent {
       this: ViewDefinitionComponent =>
 
-      val static = Lane(Position(10.meters, viewDefinition.heightSpan/2), 90.degrees, 20.meters, 180.meters) :: Nil
+      val staticObjects = Lane(Position(10.meters, viewDefinition.heightSpan/2), 90.degrees, 20.meters, 180.meters) :: Nil
     }
 
     val env = new DrawerComponent
@@ -51,9 +51,9 @@ class Main extends ProxiedApplet {
   def configureDynamic(env: SimulationObjectsComponent with AddToLaneComponent) {
     import env._
 
-    val lane1 = static(0)
+    val lane1 = staticObjects(0)
 
-    dynamic.updateBarriers(Barrier(lane1, 40.meters, Barrier.Green) :: Nil)
+    dynamicObjects.updateBarriers(Barrier(lane1, 40.meters, Barrier.Green) :: Nil)
 
     TypicalCar.withSpeed(Speed(60.kilometers, 1.hour)).addToLane(lane1)
     TypicalCar.withSpeed(Speed(30.kilometers, 1.hour)).addToLane(lane1)
@@ -97,16 +97,16 @@ trait DrawerComponent {
       gfx.background(255);
 
       toScale {
-        for (lane <- static) {
+        for (lane <- staticObjects) {
           lane.draw()
         }
 
-        for (modelObject <- dynamic.objects) {
+        for (modelObject <- dynamicObjects) {
           modelObject.draw()
         }
       }
 
-      dynamic.updateVehicles(dynamic.vehicles.map(_.move(period)))
+      dynamicObjects.updateVehicles(dynamicObjects.vehicles.map(_.move(period)))
     }
   }
 }
@@ -118,7 +118,7 @@ trait MouseEventsComponent {
 
   class MouseEvents {
     def mouseClicked(x: Int, y: Int ) {
-      dynamic.updateBarriers(dynamic.barriers.map(_.switch))
+      dynamicObjects.updateBarriers(dynamicObjects.barriers.map(_.switch))
     }
   }
 }
