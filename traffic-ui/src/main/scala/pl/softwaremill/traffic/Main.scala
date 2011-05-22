@@ -41,15 +41,22 @@ class Main extends ProxiedApplet {
             with UIModelComponent
             with SimulationObjectsComponentConfigured
             with ToScaleComponent
+            with AddToLaneComponent
 
-    val lane1 = env.static(0)
-
-    env.updateDynamic(env.DynamicSimulationObjects(
-      Vehicle(TypicalCar, Position(10.meters, 10.meters), 90.degrees, Speed(60.kilometers, 1.hour)) ::
-              Vehicle(TypicalCar, Position(10.meters, 20.meters), 90.degrees, Speed(30.kilometers, 1.hour)) :: Nil,
-      Barrier(lane1, 40.meters, Barrier.Green) :: Nil))
+    configureDynamic(env)
 
     env
+  }
+
+  def configureDynamic(env: SimulationObjectsComponent with AddToLaneComponent) {
+    import env._
+
+    val lane1 = static(0)
+
+    dynamic.updateBarriers(Barrier(lane1, 40.meters, Barrier.Green) :: Nil)
+
+    TypicalCar.withSpeed(Speed(60.kilometers, 1.hour)).addToLane(lane1)
+    TypicalCar.withSpeed(Speed(30.kilometers, 1.hour)).addToLane(lane1)
   }
 
   def createDrawProxy(env: UIComponents) = {
@@ -99,7 +106,7 @@ trait DrawerComponent {
         }
       }
 
-      updateDynamic(DynamicSimulationObjects(dynamic.vehicles.map(_.move(period)), dynamic.barriers))
+      dynamic.updateVehicles(dynamic.vehicles.map(_.move(period)))
     }
   }
 }
@@ -111,7 +118,7 @@ trait MouseEventsComponent {
 
   class MouseEvents {
     def mouseClicked(x: Int, y: Int ) {
-      updateDynamic(DynamicSimulationObjects(dynamic.vehicles, dynamic.barriers.map(_.switch)))
+      dynamic.updateBarriers(dynamic.barriers.map(_.switch))
     }
   }
 }

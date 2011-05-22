@@ -3,15 +3,29 @@ package pl.softwaremill.traffic
 trait SimulationObjectsComponent {
   val static: List[Lane]
 
-  def dynamic = currentDynamicObjects
-  def updateDynamic(state: DynamicSimulationObjects) {
-    currentDynamicObjects = state
-  }
+  val dynamic = new DynamicSimulationObjects
 
-  case class DynamicSimulationObjects(vehicles: List[Vehicle], barriers: List[Barrier]) {
-    def objects: List[ModelObject] = vehicles ++ barriers
-  }
+  class DynamicSimulationObjects {
+    case class State(vehicles: List[Vehicle], barriers: List[Barrier])
 
-  private var currentDynamicObjects = DynamicSimulationObjects(Nil, Nil)
+    private var currentState = State(Nil, Nil)
+
+    def vehicles = currentState.vehicles
+    def barriers = currentState.barriers
+
+    def objects: List[ModelObject] = currentState.vehicles ++ currentState.barriers
+
+    def addVehicle(v: Vehicle) {
+      currentState = State(v :: currentState.vehicles, currentState.barriers)
+    }
+
+    def updateVehicles(vehicles: List[Vehicle]) {
+      currentState = currentState.copy(vehicles = vehicles)
+    }
+
+    def updateBarriers(barriers: List[Barrier]) {
+      currentState = currentState.copy(barriers = barriers)
+    }
+  }
 }
 
