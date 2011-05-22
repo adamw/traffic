@@ -53,7 +53,7 @@ class Main extends ProxiedApplet {
 
     val lane1 = staticObjects(0)
 
-    dynamicObjects.updateBarriers(Barrier(lane1, 40.meters, Barrier.Green) :: Nil)
+    dynamicObjects.barriers = Barrier(lane1, 40.meters, Barrier.Green) :: Nil
 
     TypicalCar.withSpeed(Speed(60.kilometers, 1.hour)).addToLane(lane1)
     TypicalCar.withSpeed(Speed(30.kilometers, 1.hour)).addToLane(lane1)
@@ -106,7 +106,7 @@ trait DrawerComponent {
         }
       }
 
-      dynamicObjects.updateVehicles(dynamicObjects.vehicles.map(_.move(period)))
+      dynamicObjects.vehicles = dynamicObjects.vehicles.map(_.move(period))
     }
   }
 }
@@ -118,7 +118,7 @@ trait MouseEventsComponent {
 
   class MouseEvents {
     def mouseClicked(x: Int, y: Int ) {
-      dynamicObjects.updateBarriers(dynamicObjects.barriers.map(_.switch))
+      dynamicObjects.barriers = dynamicObjects.barriers.map(_.switch)
     }
   }
 }
