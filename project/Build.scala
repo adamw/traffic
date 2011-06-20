@@ -13,7 +13,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "pl.softwaremill",
     version       := "1.0",
-    scalaVersion  := "2.8.1",
+    scalaVersion  := "2.9.0-1",
     resolvers     := trafficResolvers
   )
 }
