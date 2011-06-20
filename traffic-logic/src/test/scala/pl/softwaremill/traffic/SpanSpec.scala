@@ -1,6 +1,6 @@
 package pl.softwaremill.traffic
 
-import org.specs._
+import org.specs2.mutable._
 import Span._
 
 class SpanSpec extends SpecificationWithJUnit {
