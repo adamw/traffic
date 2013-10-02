@@ -1,36 +1,34 @@
 module Traffic where
 
 import Mouse
+import open Graphics.Input
 
 -- MODEL
--- m suffix means meters
 
+-- m suffix means meters
 type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
 type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float }
 
-initialCar: SizeM -> Car
-initialCar area = { posM = { xM = -(mainAreaM.lengthM / 2) + 10, yM = 0 }, 
-                    speedKph = 10,
-                    sizeM = { lengthM = 2, widthM = 1 },
-                    direction = degrees 0 }
+-- c suffix means canvas
+type PosC = { xC: Float, yC: Float }
+type SizeC = { widthC: Float, heightC: Float }
+
+type WorldSize = { area: SizeM, canvas: SizeC }
 
 -- UPDATE
 
-drive: Float -> Car -> Car
+drive: Time -> Car -> Car
 drive t car =
   let posM = car.posM
       distanceDeltaM = (car.speedKph * 1000 / 3600) * (t / 1000)
-  in  { car | posM <- { posM | xM <- posM.xM + distanceDeltaM } } 
-
-type Sq = { x: Float, y: Float }
+      d = car.direction
+      sind = sin d
+      cosd = cos d
+  in  { car | posM <- { posM | xM <- posM.xM + distanceDeltaM*cosd
+                             , yM <- posM.yM + distanceDeltaM*sind } } 
 
 -- TRANSLATION
--- c suffix means canvas
-
-type PosC = { xC: Float, yC: Float }
-type SizeC = { widthC: Float, heightC: Float }
-type WorldSize = { area: SizeM, canvas: SizeC }
 
 trans: Float -> Float -> Float -> Float
 trans dimM dimC v = (v/dimM)*dimC
@@ -49,19 +47,60 @@ drawCar: WorldSize -> Car -> Form
 drawCar world car = 
   let sz  = sizeMToSizeC world car.sizeM
       pos = posMToPosC world car.posM
-  in  rect sz.widthC sz.heightC |> outlined (solid red) |> move (pos.xC, pos.yC)
+  in  rect sz.widthC sz.heightC |> outlined (solid red) 
+                                |> move (pos.xC, pos.yC)
+                                |> rotate car.direction
 
 -- WORLD
 
 mainCanvas: SizeC
 mainCanvas = { widthC = 500, heightC = 250 }
 
-mainAreaM: SizeM
-mainAreaM = { lengthM = 100, widthM = 50 }
+initialAreaM: SizeM
+initialAreaM = { lengthM = 100, widthM = 50 }
 
-mainWorldSize = { area = mainAreaM, canvas = mainCanvas }
+initialCar: SizeM -> Car
+initialCar area = { posM = { xM = -(area.lengthM / 2) + 10, yM = 0 }, 
+                    speedKph = 10,
+                    sizeM = { lengthM = 2, widthM = 1 },
+                    direction = degrees 30  }
 
-type World = { worldSize: WorldSize, cars: [ Car ] }
+initialWorldSize: WorldSize
+initialWorldSize = { area = initialAreaM, canvas = mainCanvas }
+
+type World = { worldSize: WorldSize, cars: [ Car ], info: String }
+
+initialWorld: World
+initialWorld = { worldSize = initialWorldSize, 
+                 cars = [ initialCar initialAreaM ], 
+                 info = "X" }
+
+scaleWorldArea: Float -> World -> World
+scaleWorldArea factor world =                 
+  let oldWorldSize = world.worldSize
+      oldArea = oldWorldSize.area
+      newArea = { lengthM = oldArea.lengthM * factor, 
+                  widthM = oldArea.widthM * factor }
+      newWorldSize = { oldWorldSize | area <- newArea }
+  in  { world | worldSize <- newWorldSize }
+
+appendToWorldInfo: String -> World -> World
+appendToWorldInfo what world = { world | info <- world.info ++ what }
+
+-- WORLD SETUP
+
+data Input = ZoomInInput | ZoomOutInput | TickInput Time
+
+worldStep input world = 
+  case input of
+    ZoomInInput ->
+      scaleWorldArea 0.5 . appendToWorldInfo "+" <| world
+    ZoomOutInput ->
+      scaleWorldArea 2 . appendToWorldInfo "-" <| world 
+    TickInput t ->
+      let cars = world.cars
+          newCars = map (drive t) cars
+      in  { world | cars <- newCars } 
 
 -- LAYOUT
 
@@ -73,21 +112,33 @@ simulation world =
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
   in  collage w h ([ boundary ] ++ cs)
 
-debug world = asText <| drawCar world.worldSize <| head world.cars
+areaInfo world =
+  let area = world.worldSize.area
+      parts = [ "Current area: length = ",
+                show area.lengthM,
+                ", width: ",
+                show area.widthM ]
+      partsCombined = foldr (++) "" parts
+  in  (asText partsCombined)
 
-layout world = (simulation world) `above` (debug world)
-
--- WORLD SETUP
-
-worldStep t world = 
-  let cars = world.cars
-      newCars = map (drive t) cars
-  in  { world | cars <- newCars } 
-
-initialWorld = { worldSize = mainWorldSize, cars = [ initialCar mainAreaM ] }
+debug world = 
+  let debugCar = asText <| drawCar world.worldSize <| head world.cars 
+  in  debugCar `above` (asText world.info)
 
 -- WIRE
 
-ticker = fps 25
+(buttons, buttonSignals) =
+  let (plusBtnEl, plusBtnSignal) = button "+"
+      (minusBtnEl, minusBtnSignal) = button "-"
+      buttonsLayout = plusBtnEl `beside` minusBtnEl
+      plusBtnInput = sampleOn plusBtnSignal (constant ZoomInInput)
+      minusBtnInput = sampleOn minusBtnSignal (constant ZoomOutInput)
+  in  (buttonsLayout, [ plusBtnInput, minusBtnInput ])
 
-main = lift layout (foldp worldStep initialWorld ticker)
+ticker = TickInput <~ fps 25
+
+inputSignal = merges (ticker :: buttonSignals)
+
+layout world = flow down [ simulation world, areaInfo world, debug world, buttons ]
+
+main = layout <~ foldp worldStep initialWorld inputSignal
