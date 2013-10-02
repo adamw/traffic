@@ -8,13 +8,14 @@ import open Graphics.Input
 -- m suffix means meters
 type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
+type ViewportM = { sizeM: sizeM, centerM: PosM }
 type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float }
 
 -- c suffix means canvas
 type PosC = { xC: Float, yC: Float }
 type SizeC = { widthC: Float, heightC: Float }
 
-type WorldSize = { area: SizeM, canvas: SizeC }
+type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
 
 -- UPDATE
 
@@ -33,20 +34,20 @@ drive t car =
 trans: Float -> Float -> Float -> Float
 trans dimM dimC v = (v/dimM)*dimC
 
-posMToPosC: WorldSize -> PosM -> PosC
-posMToPosC { area, canvas } posM = { 
-  xC = trans area.lengthM canvas.widthC posM.xM,
-  yC = trans area.widthM canvas.heightC posM.yM }
+posMToPosC: WorldViewport -> PosM -> PosC
+posMToPosC { viewportM, canvas } posM = { 
+  xC = trans viewportM.sizeM.lengthM canvas.widthC posM.xM,
+  yC = trans viewportM.sizeM.widthM canvas.heightC posM.yM }
 
-sizeMToSizeC: WorldSize -> SizeM -> SizeC
-sizeMToSizeC { area, canvas } sizeM = {
-  widthC = trans area.lengthM canvas.widthC sizeM.lengthM,
-  heightC = trans area.widthM canvas.heightC sizeM.widthM }
+sizeMToSizeC: WorldViewport -> SizeM -> SizeC
+sizeMToSizeC { viewportM, canvas } sizeM = {
+  widthC = trans viewportM.sizeM.lengthM canvas.widthC sizeM.lengthM,
+  heightC = trans viewportM.sizeM.widthM canvas.heightC sizeM.widthM }
 
-drawCar: WorldSize -> Car -> Form 
-drawCar world car = 
-  let sz  = sizeMToSizeC world car.sizeM
-      pos = posMToPosC world car.posM
+drawCar: WorldViewport -> Car -> Form 
+drawCar worldViewport car = 
+  let sz  = sizeMToSizeC worldViewport car.sizeM
+      pos = posMToPosC worldViewport car.posM
   in  rect sz.widthC sz.heightC |> outlined (solid red) 
                                 |> move (pos.xC, pos.yC)
                                 |> rotate car.direction
@@ -56,33 +57,36 @@ drawCar world car =
 mainCanvas: SizeC
 mainCanvas = { widthC = 500, heightC = 250 }
 
-initialAreaM: SizeM
-initialAreaM = { lengthM = 100, widthM = 50 }
+initialViewportM: ViewportM
+initialViewportM = { sizeM = { lengthM = 100, widthM = 50 },
+                     centerM = { xM = 0, yM = 0 } }
 
-initialCar: SizeM -> Car
-initialCar area = { posM = { xM = -(area.lengthM / 2) + 10, yM = 0 }, 
-                    speedKph = 10,
-                    sizeM = { lengthM = 2, widthM = 1 },
-                    direction = degrees 30  }
+initialCar: ViewportM -> Car
+initialCar viewportM = { posM = { xM = -(viewportM.sizeM.lengthM / 2) + 10, yM = 0 }, 
+                         speedKph = 10,
+                         sizeM = { lengthM = 2, widthM = 1 },
+                         direction = degrees 30  }
 
-initialWorldSize: WorldSize
-initialWorldSize = { area = initialAreaM, canvas = mainCanvas }
+initialWorldViewport: WorldViewport
+initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
-type World = { worldSize: WorldSize, cars: [ Car ], info: String }
+type World = { viewport: WorldViewport, cars: [ Car ], info: String }
 
 initialWorld: World
-initialWorld = { worldSize = initialWorldSize, 
-                 cars = [ initialCar initialAreaM ], 
+initialWorld = { viewport = initialWorldViewport, 
+                 cars = [ initialCar initialViewportM ], 
                  info = "X" }
 
 scaleWorldArea: Float -> World -> World
 scaleWorldArea factor world =                 
-  let oldWorldSize = world.worldSize
-      oldArea = oldWorldSize.area
-      newArea = { lengthM = oldArea.lengthM * factor, 
-                  widthM = oldArea.widthM * factor }
-      newWorldSize = { oldWorldSize | area <- newArea }
-  in  { world | worldSize <- newWorldSize }
+  let oldWorldViewport = world.viewport
+      oldViewportM = oldWorldViewport.viewportM
+      oldViewportSize = oldViewportM.sizeM
+      newViewportSize = { lengthM = oldViewportSize.lengthM * factor, 
+                          widthM = oldViewportSize.widthM * factor }
+      newViewportM = { oldViewportM | sizeM <- newViewportSize }
+      newWorldViewport = { oldWorldViewport | viewportM <- newViewportM }
+  in  { world | viewport <- newWorldViewport }
 
 appendToWorldInfo: String -> World -> World
 appendToWorldInfo what world = { world | info <- world.info ++ what }
@@ -105,24 +109,29 @@ worldStep input world =
 -- LAYOUT
 
 simulation world = 
-  let { worldSize, cars } = world
-      { area, canvas } = worldSize
+  let { viewport, cars } = world
+      { canvas } = viewport
       (w, h) = (round canvas.widthC, round canvas.heightC) 
-      cs = map (drawCar worldSize) cars
+      cs = map (drawCar viewport) cars
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
   in  collage w h ([ boundary ] ++ cs)
 
 areaInfo world =
-  let area = world.worldSize.area
+  let viewportM = world.viewport.viewportM
       parts = [ "Current area: length = ",
-                show area.lengthM,
+                show viewportM.sizeM.lengthM,
                 ", width: ",
-                show area.widthM ]
+                show viewportM.sizeM.widthM,
+                ", center at: (",
+                show viewportM.centerM.xM,
+                ", ",
+                show viewportM.centerM.yM,
+                ")" ]
       partsCombined = foldr (++) "" parts
   in  (asText partsCombined)
 
 debug world = 
-  let debugCar = asText <| drawCar world.worldSize <| head world.cars 
+  let debugCar = asText <| drawCar world.viewport <| head world.cars 
   in  debugCar `above` (asText world.info)
 
 -- WIRE
