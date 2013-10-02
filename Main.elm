@@ -36,8 +36,8 @@ trans dimM dimC v = (v/dimM)*dimC
 
 posMToPosC: WorldViewport -> PosM -> PosC
 posMToPosC { viewportM, canvas } posM = { 
-  xC = trans viewportM.sizeM.lengthM canvas.widthC posM.xM,
-  yC = trans viewportM.sizeM.widthM canvas.heightC posM.yM }
+  xC = trans viewportM.sizeM.lengthM canvas.widthC (posM.xM - viewportM.centerM.xM),
+  yC = trans viewportM.sizeM.widthM canvas.heightC (posM.yM - viewportM.centerM.yM) }
 
 sizeMToSizeC: WorldViewport -> SizeM -> SizeC
 sizeMToSizeC { viewportM, canvas } sizeM = {
@@ -77,31 +77,52 @@ initialWorld = { viewport = initialWorldViewport,
                  cars = [ initialCar initialViewportM ], 
                  info = "X" }
 
-scaleWorldArea: Float -> World -> World
-scaleWorldArea factor world =                 
+-- WORLD UPDATES
+
+updateWorldViewportM: (ViewportM -> ViewportM) -> World -> World
+updateWorldViewportM updateFn world =
   let oldWorldViewport = world.viewport
       oldViewportM = oldWorldViewport.viewportM
-      oldViewportSize = oldViewportM.sizeM
-      newViewportSize = { lengthM = oldViewportSize.lengthM * factor, 
-                          widthM = oldViewportSize.widthM * factor }
-      newViewportM = { oldViewportM | sizeM <- newViewportSize }
+      newViewportM = updateFn oldViewportM
       newWorldViewport = { oldWorldViewport | viewportM <- newViewportM }
   in  { world | viewport <- newWorldViewport }
+
+scaleWorldViewport: Float -> World -> World
+scaleWorldViewport factor =                 
+  updateWorldViewportM (\oldViewportM ->
+      let oldViewportSize = oldViewportM.sizeM
+          newViewportSize = { lengthM = oldViewportSize.lengthM * factor, 
+                              widthM  = oldViewportSize.widthM * factor }
+      in  { oldViewportM | sizeM <- newViewportSize }
+    )
+
+panWorldViewport: Float -> Float -> World -> World
+panWorldViewport xFactor yFactor = 
+  updateWorldViewportM (\oldViewportM ->
+      let oldViewportCenter = oldViewportM.centerM
+          newViewportCenter = { xM = oldViewportCenter.xM + xFactor * oldViewportM.sizeM.lengthM, 
+                                yM = oldViewportCenter.yM + yFactor * oldViewportM.sizeM.widthM }
+      in  { oldViewportM | centerM <- newViewportCenter }
+    )
 
 appendToWorldInfo: String -> World -> World
 appendToWorldInfo what world = { world | info <- world.info ++ what }
 
 -- WORLD SETUP
 
-data Input = ZoomInInput | ZoomOutInput | TickInput Time
+data Input = ZoomInInput | ZoomOutInput 
+  | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
+  | TickInput Time
 
 worldStep input world = 
   case input of
-    ZoomInInput ->
-      scaleWorldArea 0.5 . appendToWorldInfo "+" <| world
-    ZoomOutInput ->
-      scaleWorldArea 2 . appendToWorldInfo "-" <| world 
-    TickInput t ->
+    ZoomInInput   -> scaleWorldViewport 0.5 . appendToWorldInfo "+" <| world
+    ZoomOutInput  -> scaleWorldViewport 2 . appendToWorldInfo "-" <| world 
+    PanLeftInput  -> panWorldViewport -0.5 0 . appendToWorldInfo "L" <| world
+    PanRightInput -> panWorldViewport  0.5 0 . appendToWorldInfo "R" <| world
+    PanUpInput    -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
+    PanDownInput  -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
+    TickInput t   ->
       let cars = world.cars
           newCars = map (drive t) cars
       in  { world | cars <- newCars } 
@@ -134,20 +155,37 @@ debug world =
   let debugCar = asText <| drawCar world.viewport <| head world.cars 
   in  debugCar `above` (asText world.info)
 
--- WIRE
+-- VIEWPORT CONTROLS
 
-(buttons, buttonSignals) =
-  let (plusBtnEl, plusBtnSignal) = button "+"
-      (minusBtnEl, minusBtnSignal) = button "-"
-      buttonsLayout = plusBtnEl `beside` minusBtnEl
-      plusBtnInput = sampleOn plusBtnSignal (constant ZoomInInput)
-      minusBtnInput = sampleOn minusBtnSignal (constant ZoomOutInput)
-  in  (buttonsLayout, [ plusBtnInput, minusBtnInput ])
+viewportCtrlBtnsSpecs = [
+  ("+", ZoomInInput),
+  ("-", ZoomOutInput),
+  ("left", PanLeftInput),
+  ("right", PanRightInput),
+  ("up", PanUpInput),
+  ("down", PanDownInput) ]
+
+createViewportCtrlBtn: (String, Input) -> (Element, Signal Input)
+createViewportCtrlBtn (label, input) = 
+  let (btnEl, btnSignal) = button label 
+      btnInput = sampleOn btnSignal (constant input)
+  in  (btnEl, btnInput)
+
+(viewportCtrlBtnsLayout, viewportCtrlBtnsSignals) = 
+  let created = map createViewportCtrlBtn viewportCtrlBtnsSpecs
+      (btns, signals) = unzip created
+      layedOut = flow right btns
+  in  (layedOut, signals)
+
+-- WIRE
 
 ticker = TickInput <~ fps 25
 
-inputSignal = merges (ticker :: buttonSignals)
+inputSignal = merges (ticker :: viewportCtrlBtnsSignals)
 
-layout world = flow down [ simulation world, areaInfo world, debug world, buttons ]
+layout world = flow down [ simulation world, 
+                           areaInfo world, 
+                           debug world, 
+                           viewportCtrlBtnsLayout ]
 
 main = layout <~ foldp worldStep initialWorld inputSignal
