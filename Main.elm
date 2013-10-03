@@ -79,12 +79,13 @@ drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
       lightHeightC = trans viewportM.sizeM.widthM canvas.heightC (trafficLightRadiusM*2) 
       separationHeightC = trans viewportM.sizeM.widthM canvas.heightC trafficLightSeparationM
       lightOffsetC = lightHeightC+separationHeightC  
+      backingRect = rect sz.widthC sz.heightC |> filled white
       boundingRect = rect sz.widthC sz.heightC |> outlined (solid black)
       baseOval = drawTrafficLightOval lightWidthC lightHeightC trafficLight.state
       redLight = baseOval RedTrafficLight red |> moveY lightOffsetC
       yellowLight = baseOval YellowTrafficLight orange 
       greenLight = baseOval GreenTrafficLight green |> moveY -lightOffsetC
-      wholeLight = group [ boundingRect, redLight, yellowLight, greenLight ]
+      wholeLight = group [ backingRect, boundingRect, redLight, yellowLight, greenLight ]
   in  wholeLight |> move (pos.xC, pos.yC)
                  |> rotate trafficLight.direction
 
@@ -101,7 +102,7 @@ initialCar: ViewportM -> Car
 initialCar viewportM = { posM = { xM = -(viewportM.sizeM.lengthM / 2) + 10, yM = 0 }, 
                          speedKph = 10,
                          sizeM = { lengthM = 4, widthM = 2 },
-                         direction = degrees 30  }
+                         direction = degrees 0  }
 
 initialTrafficLight: ViewportM -> TrafficLight
 initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
