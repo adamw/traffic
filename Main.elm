@@ -9,7 +9,17 @@ import open Graphics.Input
 type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
 type ViewportM = { sizeM: sizeM, centerM: PosM }
+
 type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float }
+
+data TrafficLightState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
+type TrafficLight = { posM: PosM, state: TrafficLightState, direction: Float }
+
+trafficLightSizeM: SizeM
+trafficLightSizeM = { lengthM = 4, widthM = 8 }
+
+trafficLightRadiusM = 1
+trafficLightSeparationM = 0.25
 
 -- c suffix means canvas
 type PosC = { xC: Float, yC: Float }
@@ -52,29 +62,64 @@ drawCar worldViewport car =
                                 |> move (pos.xC, pos.yC)
                                 |> rotate car.direction
 
+orange = rgb 255 127 0
+
+drawTrafficLightOval: Float -> Float -> TrafficLightState -> TrafficLightState -> Color -> Form
+drawTrafficLightOval w h lightState fillIfState clr =
+  let base = oval w h
+  in  (if (lightState == fillIfState) 
+       then (filled clr base) 
+       else (outlined (solid clr) base))
+
+drawTrafficLight: WorldViewport -> TrafficLight -> Form
+drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
+  let sz  = sizeMToSizeC worldViewport trafficLightSizeM
+      pos = posMToPosC worldViewport trafficLight.posM
+      lightWidthC = trans viewportM.sizeM.lengthM canvas.widthC (trafficLightRadiusM*2)
+      lightHeightC = trans viewportM.sizeM.widthM canvas.heightC (trafficLightRadiusM*2) 
+      separationHeightC = trans viewportM.sizeM.widthM canvas.heightC trafficLightSeparationM
+      lightOffsetC = lightHeightC+separationHeightC  
+      boundingRect = rect sz.widthC sz.heightC |> outlined (solid black)
+      baseOval = drawTrafficLightOval lightWidthC lightHeightC trafficLight.state
+      redLight = baseOval RedTrafficLight red |> moveY lightOffsetC
+      yellowLight = baseOval YellowTrafficLight orange 
+      greenLight = baseOval GreenTrafficLight green |> moveY -lightOffsetC
+      wholeLight = group [ boundingRect, redLight, yellowLight, greenLight ]
+  in  wholeLight |> move (pos.xC, pos.yC)
+                 |> rotate trafficLight.direction
+
 -- WORLD
 
 mainCanvas: SizeC
 mainCanvas = { widthC = 500, heightC = 250 }
 
 initialViewportM: ViewportM
-initialViewportM = { sizeM = { lengthM = 100, widthM = 50 },
+initialViewportM = { sizeM = { lengthM = 200, widthM = 100 },
                      centerM = { xM = 0, yM = 0 } }
 
 initialCar: ViewportM -> Car
 initialCar viewportM = { posM = { xM = -(viewportM.sizeM.lengthM / 2) + 10, yM = 0 }, 
                          speedKph = 10,
-                         sizeM = { lengthM = 2, widthM = 1 },
+                         sizeM = { lengthM = 4, widthM = 2 },
                          direction = degrees 30  }
+
+initialTrafficLight: ViewportM -> TrafficLight
+initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
+                                  state = RedTrafficLight,
+                                  direction = degrees 0 }                         
 
 initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
-type World = { viewport: WorldViewport, cars: [ Car ], info: String }
+type World = { viewport: WorldViewport, 
+               cars: [ Car ], 
+               trafficLights: [ TrafficLight ], 
+               info: String }
 
 initialWorld: World
 initialWorld = { viewport = initialWorldViewport, 
                  cars = [ initialCar initialViewportM ], 
+                 trafficLights = [ initialTrafficLight initialViewportM ], 
                  info = "X" }
 
 -- WORLD UPDATES
@@ -130,12 +175,13 @@ worldStep input world =
 -- LAYOUT
 
 simulation world = 
-  let { viewport, cars } = world
+  let { viewport, cars, trafficLights } = world
       { canvas } = viewport
       (w, h) = (round canvas.widthC, round canvas.heightC) 
       cs = map (drawCar viewport) cars
+      ss = map (drawTrafficLight viewport) trafficLights
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
-  in  collage w h ([ boundary ] ++ cs)
+  in  collage w h ([ boundary ] ++ cs ++ ss)
 
 areaInfo world =
   let viewportM = world.viewport.viewportM
