@@ -15,12 +15,6 @@ type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float }
 data TrafficLightState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
 type TrafficLight = { posM: PosM, state: TrafficLightState, direction: Float }
 
-trafficLightSizeM: SizeM
-trafficLightSizeM = { lengthM = 4, widthM = 8 }
-
-trafficLightRadiusM = 1
-trafficLightSeparationM = 0.25
-
 -- c suffix means canvas
 type PosC = { xC: Float, yC: Float }
 type SizeC = { widthC: Float, heightC: Float }
@@ -64,24 +58,27 @@ drawCar worldViewport car =
 
 orange = rgb 255 127 0
 
-drawTrafficLightOval: Float -> Float -> TrafficLightState -> TrafficLightState -> Color -> Form
-drawTrafficLightOval w h lightState fillIfState clr =
-  let base = oval w h
+trafficLightSizeC: SizeC
+trafficLightSizeC = { widthC = 12, heightC = 24 }
+
+trafficLightRadiusC = 2.5
+trafficLightSeparationC = 1.7
+
+drawTrafficLightCircle: Float -> TrafficLightState -> TrafficLightState -> Color -> Form
+drawTrafficLightCircle r lightState fillIfState clr =
+  let base = circle r
   in  (if (lightState == fillIfState) 
        then (filled clr base) 
        else (outlined (solid clr) base))
 
 drawTrafficLight: WorldViewport -> TrafficLight -> Form
 drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
-  let sz  = sizeMToSizeC worldViewport trafficLightSizeM
+  let sz  = trafficLightSizeC
       pos = posMToPosC worldViewport trafficLight.posM
-      lightWidthC = trans viewportM.sizeM.lengthM canvas.widthC (trafficLightRadiusM*2)
-      lightHeightC = trans viewportM.sizeM.widthM canvas.heightC (trafficLightRadiusM*2) 
-      separationHeightC = trans viewportM.sizeM.widthM canvas.heightC trafficLightSeparationM
-      lightOffsetC = lightHeightC+separationHeightC  
+      lightOffsetC = 2*trafficLightRadiusC+trafficLightSeparationC  
       backingRect = rect sz.widthC sz.heightC |> filled white
       boundingRect = rect sz.widthC sz.heightC |> outlined (solid black)
-      baseOval = drawTrafficLightOval lightWidthC lightHeightC trafficLight.state
+      baseOval = drawTrafficLightCircle trafficLightRadiusC trafficLight.state
       redLight = baseOval RedTrafficLight red |> moveY lightOffsetC
       yellowLight = baseOval YellowTrafficLight orange 
       greenLight = baseOval GreenTrafficLight green |> moveY -lightOffsetC
