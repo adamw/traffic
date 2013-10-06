@@ -10,10 +10,12 @@ type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
 type ViewportM = { sizeM: sizeM, centerM: PosM }
 
-type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float }
+type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float, aMss: Float }
 
 data TrafficLightState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
 type TrafficLight = { posM: PosM, state: TrafficLightState, direction: Float }
+
+data Obj = CarObj Car | TrafficLightObj TrafficLight
 
 -- c suffix means canvas
 type PosC = { xC: Float, yC: Float }
@@ -22,6 +24,18 @@ type SizeC = { widthC: Float, heightC: Float }
 type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
 
 -- UPDATE
+
+{-
+1. detect what's ahead - find the closest object
+2. decide if we need to start slowing down
+   - barrier - always if close enough
+   - another car - if close enough and moving slower
+3. if so, start slowing down
+4. if we can accelerate, accelerate
+   - only if the next car is far away enough
+
+deceleration - maximum? how far ahead we are going to start stopping?
+-}
 
 drive: Time -> Car -> Car
 drive t car =
@@ -32,6 +46,12 @@ drive t car =
       cosd = cos d
   in  { car | posM <- { posM | xM <- posM.xM + distanceDeltaM*cosd
                              , yM <- posM.yM + distanceDeltaM*sind } } 
+
+updateObj: Time -> Obj -> Obj
+updateObj t obj =
+  case obj of
+    CarObj car -> CarObj (drive t car)
+    _ -> obj
 
 -- TRANSLATION
 
@@ -86,6 +106,12 @@ drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
   in  wholeLight |> move (pos.xC, pos.yC)
                  |> rotate trafficLight.direction
 
+drawObj: WorldViewport -> Obj -> Form
+drawObj worldViewport obj = 
+  case obj of
+    CarObj car -> drawCar worldViewport car
+    TrafficLightObj trafficLight -> drawTrafficLight worldViewport trafficLight
+
 -- WORLD
 
 mainCanvas: SizeC
@@ -99,7 +125,8 @@ initialCar: ViewportM -> Car
 initialCar viewportM = { posM = { xM = -(viewportM.sizeM.lengthM / 2) + 10, yM = 0 }, 
                          speedKph = 10,
                          sizeM = { lengthM = 4, widthM = 2 },
-                         direction = degrees 0  }
+                         direction = degrees 0,
+                         aMss = 4.3 }
 
 initialTrafficLight: ViewportM -> TrafficLight
 initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
@@ -110,14 +137,13 @@ initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
 type World = { viewport: WorldViewport, 
-               cars: [ Car ], 
-               trafficLights: [ TrafficLight ], 
+               objs: [ Obj ],
                info: String }
 
 initialWorld: World
 initialWorld = { viewport = initialWorldViewport, 
-                 cars = [ initialCar initialViewportM ], 
-                 trafficLights = [ initialTrafficLight initialViewportM ], 
+                 objs = [ CarObj (initialCar initialViewportM), 
+                          TrafficLightObj (initialTrafficLight initialViewportM) ], 
                  info = "X" }
 
 -- WORLD UPDATES
@@ -166,20 +192,19 @@ worldStep input world =
     PanUpInput    -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
     PanDownInput  -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
     TickInput t   ->
-      let cars = world.cars
-          newCars = map (drive t) cars
-      in  { world | cars <- newCars } 
+      let objs = world.objs
+          newObjs = map (updateObj t) objs
+      in  { world | objs <- newObjs } 
 
 -- LAYOUT
 
 simulation world = 
-  let { viewport, cars, trafficLights } = world
+  let { viewport, objs } = world
       { canvas } = viewport
       (w, h) = (round canvas.widthC, round canvas.heightC) 
-      cs = map (drawCar viewport) cars
-      ss = map (drawTrafficLight viewport) trafficLights
+      os = map (drawObj viewport) objs
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
-  in  collage w h ([ boundary ] ++ cs ++ ss)
+  in  collage w h ([ boundary ] ++ os)
 
 areaInfo world =
   let viewportM = world.viewport.viewportM
@@ -196,7 +221,7 @@ areaInfo world =
   in  (asText partsCombined)
 
 debug world = 
-  let debugCar = asText <| drawCar world.viewport <| head world.cars 
+  let debugCar = asText <| drawObj world.viewport <| head world.objs 
   in  debugCar `above` (asText world.info)
 
 -- VIEWPORT CONTROLS
