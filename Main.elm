@@ -17,11 +17,51 @@ type TrafficLight = { posM: PosM, state: TrafficLightState, direction: Float }
 
 data Obj = CarObj Car | TrafficLightObj TrafficLight
 
+posMOfObj: Obj -> PosM
+posMOfObj obj =
+  case obj of
+    CarObj car -> car.posM
+    TrafficLightObj trafficLight -> trafficLight.posM
+
 -- c suffix means canvas
 type PosC = { xC: Float, yC: Float }
 type SizeC = { widthC: Float, heightC: Float }
 
 type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
+
+-- NEAREST OBSTACLE DETECTION
+
+type ObjAhead = Maybe (Obj, Float)
+
+-- ax+by+c=0
+-- ahead! (half-line)
+
+distance: Car -> Obj -> Maybe Float
+distance fromCar toObj =
+  let from = fromCar.posM
+      to = posMOfObj toObj
+      -- centring the target coordinates ('to') with 'from'
+      toRelToFrom = { xM = to.xM - from.xM, yM = to.yM - from.yM }
+      -- r is now the distance between the points, phi the angle
+      (r, phi) = toPolar (toRelToFrom.xM, toRelToFrom.yM)
+      -- if 'phi' is the same as the car direction, then it must be ahead
+  in  if abs(phi - fromCar.direction) <= 0.01
+      then Just r
+      else Nothing
+
+updateIfNearer: Car -> Obj -> ObjAhead -> ObjAhead
+updateIfNearer fromCar toObj current =
+  let dist = distance fromCar toObj
+  in  case (dist, current) of
+        (Nothing, _)       -> current
+        (Just d,  Nothing) -> Just (toObj, d)
+        (Just d,  Just (otherObj, otherD)) ->
+          if (otherD > d) then Just (toObj, d) else current
+
+findFirstAhead: Car -> [ Obj ] -> ObjAhead
+findFirstAhead aheadOf allObjs  = 
+  let otherObjs = filter (\o -> o /= (CarObj aheadOf)) allObjs
+  in  foldl (updateIfNearer aheadOf) Nothing otherObjs
 
 -- UPDATE
 
@@ -47,11 +87,15 @@ drive t car =
   in  { car | posM <- { posM | xM <- posM.xM + distanceDeltaM*cosd
                              , yM <- posM.yM + distanceDeltaM*sind } } 
 
-updateObj: Time -> Obj -> Obj
-updateObj t obj =
+updateObj: Time -> [ Obj ] -> Obj -> Obj
+updateObj t allObjs obj =
   case obj of
     CarObj car -> CarObj (drive t car)
     _ -> obj
+
+updateObjs: Time -> [ Obj ] -> [ Obj ]
+updateObjs t objs =
+  map (updateObj t objs) objs
 
 -- TRANSLATION
 
@@ -115,18 +159,18 @@ drawObj worldViewport obj =
 -- WORLD
 
 mainCanvas: SizeC
-mainCanvas = { widthC = 500, heightC = 250 }
+mainCanvas = { widthC = 1000, heightC = 500 }
 
 initialViewportM: ViewportM
-initialViewportM = { sizeM = { lengthM = 200, widthM = 100 },
+initialViewportM = { sizeM = { lengthM = 300, widthM = 150 },
                      centerM = { xM = 0, yM = 0 } }
 
-initialCar: ViewportM -> Car
-initialCar viewportM = { posM = { xM = -(viewportM.sizeM.lengthM / 2) + 10, yM = 0 }, 
-                         speedKph = 10,
-                         sizeM = { lengthM = 4, widthM = 2 },
-                         direction = degrees 0,
-                         aMss = 4.3 }
+createCar: Float -> Car
+createCar xOffset = { posM = { xM = xOffset, yM = 0 }, 
+                       speedKph = 50,
+                       sizeM = { lengthM = 4, widthM = 2 },
+                       direction = degrees 0,
+                       aMss = 4.3 }
 
 initialTrafficLight: ViewportM -> TrafficLight
 initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
@@ -142,7 +186,9 @@ type World = { viewport: WorldViewport,
 
 initialWorld: World
 initialWorld = { viewport = initialWorldViewport, 
-                 objs = [ CarObj (initialCar initialViewportM), 
+                 objs = [ CarObj (createCar -140), 
+                          CarObj (createCar -120), 
+                          CarObj (createCar -100), 
                           TrafficLightObj (initialTrafficLight initialViewportM) ], 
                  info = "X" }
 
@@ -193,7 +239,7 @@ worldStep input world =
     PanDownInput  -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
     TickInput t   ->
       let objs = world.objs
-          newObjs = map (updateObj t) objs
+          newObjs = updateObjs t objs
       in  { world | objs <- newObjs } 
 
 -- LAYOUT
@@ -220,9 +266,14 @@ areaInfo world =
       partsCombined = foldr (++) "" parts
   in  (asText partsCombined)
 
+debugObj world obj =
+  case obj of
+    CarObj car -> asText <| findFirstAhead car world.objs
+    TrafficLightObj trafficLight -> asText <| trafficLight
+
 debug world = 
-  let debugCar = asText <| drawObj world.viewport <| head world.objs 
-  in  debugCar `above` (asText world.info)
+  let debugs = map (debugObj world) world.objs
+  in  flow down (debugs ++ [ asText world.info ])
 
 -- VIEWPORT CONTROLS
 
