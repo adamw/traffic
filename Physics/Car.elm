@@ -32,7 +32,7 @@ gAccelMss = 9.81
 comfortableDecelMss = gAccelMss * 0.35
 maxDecelMss = gAccelMss * 0.7
 
-minObjSeparationM = 10
+type ObjAheadParams = { speedKph: Float, minSeparationM: Float, distanceM: Float }
 
 {--
 s = att/2
@@ -42,15 +42,16 @@ s = a(v/a)(v/a)/2 = vv/2a -> a = vv/2s
 --}
 
 {--
-What is the desireable distance between two objects ('back' object follows the 'front' one)
-travelling at the given speeds, if we can break with the given deceleration?
+What is the desireable distance between two objects, if we can break with the 
+given deceleration?
 --}
-desiredDistanceM: Float -> Float -> Float -> Float
-desiredDistanceM speedKphBack speedKphFront decelMss =
-  let decisionDistanceM = slowReactionTimeS * (speedKphToMps speedKphBack)
+desiredDistanceM: Car -> ObjAheadParams -> Float -> Float
+desiredDistanceM car otherParams decelMss =
+  let decisionDistanceM = slowReactionTimeS * (speedKphToMps car.speedKph)
       extraSafetyDistanceM = 0 -- TODO
+      minSeparationM = otherParams.minSeparationM + car.sizeM.lengthM / 2
       -- TODO real min separation is 2 + obj_len/2
-  in  max (decisionDistanceM + extraSafetyDistanceM) minObjSeparationM
+  in  max (decisionDistanceM + extraSafetyDistanceM) minSeparationM
 
 computeAccel: Float -> Float -> Float
 computeAccel approachSpeedKph deltaDistanceM =
@@ -59,23 +60,31 @@ computeAccel approachSpeedKph deltaDistanceM =
          | a > maxDecelMss -> -maxDecelMss
          | otherwise -> -a
 
-accelForCarGivenAhead: Car -> (Float, Float) -> Float
-accelForCarGivenAhead car (otherSpeedKph, distanceM) =
-  let approachSpeedKph = car.speedKph - otherSpeedKph
-      safeDistanceM = desiredDistanceM car.speedKph otherSpeedKph comfortableDecelMss
-      deltaDistanceM = distanceM - safeDistanceM
+accelForCarGivenAhead: Car -> ObjAheadParams -> Float
+accelForCarGivenAhead car otherParams =
+  let approachSpeedKph = car.speedKph - otherParams.speedKph
+      safeDistanceM = desiredDistanceM car otherParams comfortableDecelMss
+      deltaDistanceM = otherParams.distanceM - safeDistanceM
          -- too close, nothing better that we can do. Shouldn't happen ;)
   in  if | deltaDistanceM < 0   -> -comfortableDecelMss
          -- if the distance is 0.1, we treat it as 0 anyway, to avoid rounding errors
          -- when dividing by a very small number in the next case
          | deltaDistanceM < 0.1 -> 0
          | otherwise            -> computeAccel approachSpeedKph deltaDistanceM
+
+minSeparationFromM obj = case obj of
+  CarObj car -> car.sizeM.lengthM / 2 + 2
+  TrafficLightObj tl -> 3
              
-firstAheadOrDummyParams: Maybe (Obj, Float) -> (Float, Float)
+firstAheadOrDummyParams: Maybe (Obj, Float) -> ObjAheadParams
 firstAheadOrDummyParams objAhead =
   case objAhead of
-    Just (otherObj, distanceM) -> (speedKphOfObj otherObj, distanceM)
-    Nothing -> (0, 100000) -- pretending there's an object far far away
+    Just (otherObj, distanceM) -> { speedKph = speedKphOfObj otherObj, 
+                                    minSeparationM = minSeparationFromM otherObj,
+                                    distanceM = distanceM }
+    Nothing -> { speedKph = 0, 
+                 minSeparationM = 0,
+                 distanceM = 100000 } -- pretending there's an object far far away
 
 accelForCar: [ Obj ] -> Car -> Float
 accelForCar allObjs car =
