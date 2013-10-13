@@ -4,7 +4,6 @@ import open Model
 import open WorldModel
 
 import Graphics.Input
-
 import Physics
 import Draw
 
@@ -12,20 +11,24 @@ import Draw
 
 data Input = ZoomInInput | ZoomOutInput 
   | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
+  | ToggleTrafficLight
   | TickInput Time
+
+updateWorldObjs world updateFn =
+  let objs = world.objs
+      newObjs = updateFn objs
+  in  { world | objs <- newObjs } 
 
 worldStep input world = 
   case input of
-    ZoomInInput   -> scaleWorldViewport 0.5 . appendToWorldInfo "+" <| world
-    ZoomOutInput  -> scaleWorldViewport 2 . appendToWorldInfo "-" <| world 
-    PanLeftInput  -> panWorldViewport -0.5 0 . appendToWorldInfo "L" <| world
-    PanRightInput -> panWorldViewport  0.5 0 . appendToWorldInfo "R" <| world
-    PanUpInput    -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
-    PanDownInput  -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
-    TickInput t   ->
-      let objs = world.objs
-          newObjs = Physics.updateObjs t objs
-      in  { world | objs <- newObjs } 
+    ZoomInInput        -> scaleWorldViewport 0.5 . appendToWorldInfo "+" <| world
+    ZoomOutInput       -> scaleWorldViewport 2 . appendToWorldInfo "-" <| world 
+    PanLeftInput       -> panWorldViewport -0.5 0 . appendToWorldInfo "L" <| world
+    PanRightInput      -> panWorldViewport  0.5 0 . appendToWorldInfo "R" <| world
+    PanUpInput         -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
+    PanDownInput       -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
+    ToggleTrafficLight -> updateWorldObjs world <| Physics.toggleTrafficLight
+    TickInput t        -> updateWorldObjs world <| Physics.updateObjs t
 
 -- LAYOUT
 
@@ -61,6 +64,11 @@ debug world =
       x = "x"
   in  flow down (debugs ++ [ asText world.info ] ++ [ asText x ])
 
+(tlToggleEl, tlToggleInput) = 
+  let (btnEl, btnSignal) = Graphics.Input.button "Change traffic light" 
+      btnInput = sampleOn btnSignal (constant ToggleTrafficLight)
+  in  (btnEl, btnInput)  
+
 -- VIEWPORT CONTROLS
 
 viewportCtrlBtnsSpecs = [
@@ -87,9 +95,10 @@ createViewportCtrlBtn (label, input) =
 
 ticker = TickInput <~ fps 25
 
-inputSignal = merges (ticker :: viewportCtrlBtnsSignals)
+inputSignal = merges (ticker :: tlToggleInput :: viewportCtrlBtnsSignals)
 
 layout world = flow down [ simulation world, 
                            areaInfo world, 
                            debug world, 
-                           viewportCtrlBtnsLayout ]
+                           viewportCtrlBtnsLayout,
+                           tlToggleEl ]

@@ -7,8 +7,19 @@ type ViewportM = { sizeM: sizeM, centerM: PosM }
 
 type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float, aMss: Float }
 
-data TrafficLightState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
-type TrafficLight = { posM: PosM, state: TrafficLightState, direction: Float }
+data TLState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
+
+-- work-around for https://github.com/evancz/Elm/issues/215
+data TLUpdateFn = TLUpdateFn { fn: (TLState, Time) -> (TLState, TLUpdateFn) }
+noOpTLUpdateFn = TLUpdateFn { fn = \(state, t) -> (state, noOpTLUpdateFn) }
+
+type TLSwitchTimings = { yellowAfterRed: Float,
+                         yellowAfterGreen: Float }
+type TrafficLight = { posM: PosM, 
+                      direction: Float,
+                      state: TLState, 
+                      updateFn: TLUpdateFn,
+                      switchTimings: TLSwitchTimings }
 
 data Obj = CarObj Car | TrafficLightObj TrafficLight
 
@@ -26,3 +37,7 @@ speedKphOfObj obj =
 
 speedKphToMps: Float -> Float
 speedKphToMps speedKph = speedKph * 1000 / 3600
+
+-- CONSTANTS
+oneSecond = 1000
+halfSecond = oneSecond/2

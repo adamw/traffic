@@ -34,7 +34,7 @@ trafficLightSizeC = { widthC = 12, heightC = 24 }
 trafficLightRadiusC = 2.5
 trafficLightSeparationC = 1.7
 
-drawTrafficLightCircle: Float -> TrafficLightState -> TrafficLightState -> Color -> Form
+drawTrafficLightCircle: Float -> TLState -> TLState -> Color -> Form
 drawTrafficLightCircle r lightState fillIfState clr =
   let base = circle r
   in  (if (lightState == fillIfState) 

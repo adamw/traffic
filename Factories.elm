@@ -19,8 +19,14 @@ createCar xOffset = { posM = { xM = xOffset, yM = 0 },
 
 initialTrafficLight: ViewportM -> TrafficLight
 initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
+                                  direction = degrees 0,
                                   state = RedTrafficLight,
-                                  direction = degrees 0 }                         
+                                  updateFn = noOpTLUpdateFn ,
+                                  switchTimings = {
+                                    yellowAfterRed = 1.0 * oneSecond, 
+                                    yellowAfterGreen = 3.0 * oneSecond
+                                  } 
+                                }                         
 
 initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
