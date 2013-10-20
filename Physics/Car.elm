@@ -5,21 +5,6 @@ import NearestObstacle
 
 -- UPDATE
 
-{-
-1. detect what's ahead - find the closest object
-2. decide if we need to start slowing down
-   - barrier - always if close enough
-   - another car - if close enough and moving slower
-3. if so, start slowing down
-4. if we can accelerate, accelerate
-   - only if the next car is far away enough
-
-deceleration - maximum? how far ahead we are going to start stopping
-
-yellow light: should be on long enough for a car with a distance < comfortable breaking
-distance to pass
--}
-
 -- interesting ref: 
 -- http://cs.zstu.edu.cn/udpaloolapdu/Files/20101122180945.pdf
 -- http://www.direct.gov.uk/prod_consum_dg/groups/dg_digitalassets/@dg/@en/@motor/documents/digitalasset/dg_188029.pdf
@@ -107,7 +92,10 @@ firstAheadOrDummyParams objAhead =
 
 accelForCar: [ Obj ] -> Car -> Float
 accelForCar allObjs car =
-  let firstAhead = NearestObstacle.findFirstAhead allObjs car
+      -- -1 because there's always a safety extra distance and we want to prevent
+      -- running the red if the distance is close to (numerically) the stopping distance
+  let stoppingDistanceM = (speedAdjustDistanceM car.speedKph) - 1
+      firstAhead = NearestObstacle.findFirstAhead allObjs car stoppingDistanceM
       firstAheadParams = firstAheadOrDummyParams firstAhead
   in  accelForCarGivenAhead car firstAheadParams
 

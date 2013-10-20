@@ -17,23 +17,31 @@ distanceIfAhead fromCar toObj =
       then Just r
       else Nothing
 
-updateIfNearer: Car -> Obj -> ObjAhead -> ObjAhead
-updateIfNearer fromCar toObj current =
+isTrafficLight obj = case obj of { TrafficLightObj tl -> True ; _ -> False }
+
+updateIfNearer: Car -> Float -> Obj -> ObjAhead -> ObjAhead
+updateIfNearer fromCar minTlDistM toObj current =
   let dist = distanceIfAhead fromCar toObj
-  in  case (dist, current) of
-        (Nothing, _)       -> current
-        (Just d,  Nothing) -> Just (toObj, d)
-        (Just d,  Just (otherObj, otherD)) ->
+      objIsTl = isTrafficLight toObj
+      objIsTlAndTooClose = objIsTl && case dist of { Just d -> d < minTlDistM ; _ -> False }
+  in  case (dist, current, objIsTlAndTooClose) of
+        (Nothing, _, _)       -> current
+        (_,       _, True)    -> current
+        (Just d,  Nothing, _) -> Just (toObj, d)
+        (Just d,  Just (otherObj, otherD), _) ->
           if (otherD > d) then Just (toObj, d) else current
 
--- TODO: min non-green traffic light distance (closer than this - we don't stop
--- and we detect the next obstacle)
-findFirstAhead: [ Obj ] -> Car -> ObjAhead
-findFirstAhead allObjs aheadOf = 
+{--
+If the closest object is a traffic light, and it's closer than the given stopping
+distance, then it's ignored (this is for the case of light changes, when the car
+is too close to stop).
+--}
+findFirstAhead: [ Obj ] -> Car -> Float -> ObjAhead
+findFirstAhead allObjs aheadOf stoppingDistanceM = 
   let isOtherObj = (\o -> o /= (CarObj aheadOf))
       -- green lights are 'transparent' - they are not treated as an obstacle
       isNotGreenLight = (\o -> case o of
                                  TrafficLightObj tl -> tl.state /= GreenTrafficLight
                                  _ -> True)
       otherObjs = filter isNotGreenLight . filter isOtherObj <| allObjs
-  in  foldl (updateIfNearer aheadOf) Nothing otherObjs
+  in  foldl (updateIfNearer aheadOf stoppingDistanceM) Nothing otherObjs
