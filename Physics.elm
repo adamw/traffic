@@ -10,6 +10,7 @@ updateObj t allObjs obj =
   case obj of
     CarObj car -> [ CarObj (Physics.Car.drive t allObjs car) ]
     TrafficLightObj tl -> [ TrafficLightObj (Physics.TrafficLight.update t tl) ]
+    CarCreatorObj cc  -> cons (Physics.CarCreator.createIfVacant cc allObjs) [ obj ]
     _ -> [ obj ]
 
 updateObjsTimeQuant: Time -> [ Obj ] -> [ Obj ]

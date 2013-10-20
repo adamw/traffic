@@ -100,6 +100,6 @@ inputSignal = merges (ticker :: tlToggleInput :: viewportCtrlBtnsSignals)
 
 layout world = flow down [ simulation world, 
                            areaInfo world, 
-                           debug world, 
+                           --debug world, 
                            viewportCtrlBtnsLayout,
                            tlToggleEl ]

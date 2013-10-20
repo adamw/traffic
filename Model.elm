@@ -44,5 +44,8 @@ speedKphOfObj obj =
 speedKphToMps: Float -> Float
 speedKphToMps speedKph = speedKph * 5 / 18 -- 1000/3600
 
+distM: PosM -> PosM -> Float
+distM p1 p2 = sqrt ((p1.xM - p2.xM)^2 + (p1.yM - p2.yM)^2)
+
 -- CONSTANTS
 oneSecond = 1000

@@ -17,6 +17,10 @@ createCar xOffset = { posM = { xM = xOffset, yM = 0 },
                        direction = degrees 0,
                        aMss = 4.3 }
 
+createCarCreator: Float -> CarCreator
+createCarCreator xOffset = { posM = { xM = xOffset, yM = 0 },
+                             direction = degrees 0 }
+
 initialTrafficLight: ViewportM -> TrafficLight
 initialTrafficLight viewportM = { posM = { xM = 0, yM = 0 },
                                   direction = degrees 0,
@@ -36,5 +40,6 @@ initialWorld = { viewport = initialWorldViewport,
                  objs = [ CarObj (createCar -150), 
                           CarObj (createCar -100), 
                           CarObj (createCar -50), 
-                          TrafficLightObj (initialTrafficLight initialViewportM) ], 
+                          TrafficLightObj (initialTrafficLight initialViewportM),
+                          CarCreatorObj (createCarCreator -150) ], 
                  info = "X" }
