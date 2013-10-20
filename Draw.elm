@@ -56,8 +56,9 @@ drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
   in  wholeLight |> move (pos.xC, pos.yC)
                  |> rotate trafficLight.direction
 
-drawObj: WorldViewport -> Obj -> Form
+drawObj: WorldViewport -> Obj -> Maybe Form
 drawObj worldViewport obj = 
   case obj of
-    CarObj car -> drawCar worldViewport car
-    TrafficLightObj trafficLight -> drawTrafficLight worldViewport trafficLight
+    CarObj car -> Just (drawCar worldViewport car)
+    TrafficLightObj trafficLight -> Just (drawTrafficLight worldViewport trafficLight)
+    _ -> Nothing

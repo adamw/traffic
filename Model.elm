@@ -21,13 +21,19 @@ type TrafficLight = { posM: PosM,
                       updateFn: TLUpdateFn,
                       switchTimings: TLSwitchTimings }
 
-data Obj = CarObj Car | TrafficLightObj TrafficLight
+type CarCreator = { posM: PosM, direction: Float }
+
+data Obj = CarObj Car 
+         | TrafficLightObj TrafficLight
+         | CarCreatorObj CarCreator
 
 posMOfObj: Obj -> PosM
 posMOfObj obj =
   case obj of
     CarObj car -> car.posM
     TrafficLightObj trafficLight -> trafficLight.posM
+    CarCreatorObj carCreator -> carCreator.posM
+    _ -> { xM = 0, yM = 0 }
 
 speedKphOfObj: Obj -> Float
 speedKphOfObj obj =
@@ -40,4 +46,3 @@ speedKphToMps speedKph = speedKph * 5 / 18 -- 1000/3600
 
 -- CONSTANTS
 oneSecond = 1000
-halfSecond = oneSecond/2

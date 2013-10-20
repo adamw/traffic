@@ -43,5 +43,11 @@ findFirstAhead allObjs aheadOf stoppingDistanceM =
       isNotGreenLight = (\o -> case o of
                                  TrafficLightObj tl -> tl.state /= GreenTrafficLight
                                  _ -> True)
-      otherObjs = filter isNotGreenLight . filter isOtherObj <| allObjs
+      isPotentialObstacle = (\o -> case o of
+                                     CarObj c -> True
+                                     TrafficLightObj tl -> True
+                                     _ -> False)
+      otherObjs = filter isNotGreenLight . 
+        filter isOtherObj . 
+        filter isPotentialObstacle <| allObjs
   in  foldl (updateIfNearer aheadOf stoppingDistanceM) Nothing otherObjs

@@ -36,7 +36,7 @@ simulation world =
   let { viewport, objs } = world
       { canvas } = viewport
       (w, h) = (round canvas.widthC, round canvas.heightC) 
-      os = map (Draw.drawObj viewport) objs
+      os = justs . map (Draw.drawObj viewport) <| objs
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
   in  collage w h ([ boundary ] ++ os)
 
@@ -58,6 +58,7 @@ debugObj world obj =
   case obj of
     CarObj car -> asText <| car -- accelForCar world.objs car -- findFirstAhead world.objs car 
     TrafficLightObj trafficLight -> asText <| trafficLight
+    _ -> asText <| obj
 
 debug world = 
   let debugs = map (debugObj world) world.objs
