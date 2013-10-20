@@ -9,7 +9,7 @@ type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float, aMss: 
 
 data TLState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
 
--- work-around for https://github.com/evancz/Elm/issues/215
+-- work-around for https://github.com/evancz/Elm/issues/294
 data TLUpdateFn = TLUpdateFn { fn: (TLState, Time) -> (TLState, TLUpdateFn) }
 noOpTLUpdateFn = TLUpdateFn { fn = \(state, t) -> (state, noOpTLUpdateFn) }
 
@@ -36,7 +36,7 @@ speedKphOfObj obj =
     _ -> 0
 
 speedKphToMps: Float -> Float
-speedKphToMps speedKph = speedKph * 1000 / 3600
+speedKphToMps speedKph = speedKph * 5 / 18 -- 1000/3600
 
 -- CONSTANTS
 oneSecond = 1000

@@ -41,36 +41,55 @@ v = at -> t = v/a
 s = a(v/a)(v/a)/2 = vv/2a -> a = vv/2s
 --}
 
-{--
-What is the desireable distance between two objects, if we can break with the 
-given deceleration?
---}
-desiredDistanceM: Car -> ObjAheadParams -> Float -> Float
-desiredDistanceM car otherParams decelMss =
+desiredDistanceM car objAheadParams =
   let decisionDistanceM = slowReactionTimeS * (speedKphToMps car.speedKph)
-      extraSafetyDistanceM = 0 -- TODO
-      minSeparationM = otherParams.minSeparationM + car.sizeM.lengthM / 2
-      -- TODO real min separation is 2 + obj_len/2
+      extraSafetyDistanceM = 2
+      minSeparationM = objAheadParams.minSeparationM + car.sizeM.lengthM / 2
   in  max (decisionDistanceM + extraSafetyDistanceM) minSeparationM
 
-computeAccel: Float -> Float -> Float
-computeAccel approachSpeedKph deltaDistanceM =
-  let a = (speedKphToMps approachSpeedKph)^2/(2*deltaDistanceM) 
+computeDecel dvKph ddM =
+  let a = (speedKphToMps dvKph)^2/(2*ddM) 
   in  if | a < comfortableDecelMss -> 0
          | a > maxDecelMss -> -maxDecelMss
          | otherwise -> -a
 
+zeroIfNegligible value bound = if (abs value) < bound then 0 else value
+
+-- approach speed
+deltaOfSpeedKph car objAheadParams = 
+  let dvNegligibleKph = car.speedKph / 50 -- 0.1kph for 5kph difference, 1kph for 50kph
+      dvKphRaw = car.speedKph - objAheadParams.speedKph
+  in  zeroIfNegligible dvKphRaw dvNegligibleKph
+
+deltaOfDistanceM dsM car objAheadParams =
+  let ddNegligibleM = dsM/50 -- 0.1m for 5meters distance, 10m for 500meters
+      ddMRaw = objAheadParams.distanceM - dsM
+  in  zeroIfNegligible ddMRaw ddNegligibleM
+
+speedAdjustDistanceM dvKph = (speedKphToMps dvKph)^2/(2*comfortableDecelMss)
+
+{-- 
+we are treating small distances and speeds as 0 to prevent frequent changes
+in acceleration (accel/decel) and to prevent rounding errors when diving by a very
+small number.
+--}
 accelForCarGivenAhead: Car -> ObjAheadParams -> Float
-accelForCarGivenAhead car otherParams =
-  let approachSpeedKph = car.speedKph - otherParams.speedKph
-      safeDistanceM = desiredDistanceM car otherParams comfortableDecelMss
-      deltaDistanceM = otherParams.distanceM - safeDistanceM
-         -- too close, nothing better that we can do. Shouldn't happen ;)
-  in  if | deltaDistanceM < 0   -> -comfortableDecelMss
-         -- if the distance is 0.1, we treat it as 0 anyway, to avoid rounding errors
-         -- when dividing by a very small number in the next case
-         | deltaDistanceM < 0.1 -> 0
-         | otherwise            -> computeAccel approachSpeedKph deltaDistanceM
+accelForCarGivenAhead car objAheadParams =
+  let dvKph = deltaOfSpeedKph car objAheadParams
+      dsM = desiredDistanceM car objAheadParams -- distance safe in meters       
+      ddM = deltaOfDistanceM dsM car objAheadParams
+      dsaM = speedAdjustDistanceM dvKph
+  in  if -- exactly at target or very close (due to rounding)
+         | ddM == 0 && dvKph == 0 -> 0          
+         | ddM <= 0 -> -maxDecelMss
+         | otherwise -> if dvKph < 0 
+           -- drifting away, and above safe distance - can accelerate
+           then car.aMss           
+           else if ddM > dsaM 
+                   -- we are further away then the speed adjust distance - can accel
+                   then car.aMss
+                   -- adjsuting speed
+                   else computeDecel dvKph ddM
 
 minSeparationFromM obj = case obj of
   CarObj car -> car.sizeM.lengthM / 2 + 2
@@ -96,14 +115,14 @@ drive: Time -> [ Obj ] -> Car -> Car
 drive t allObjs car =
   let accel = accelForCar allObjs car
       tS = t / 1000
-      newSpeed = car.speedKph + accel * tS * 3600 / 1000 
-      newSpeedNotNegative = max 0 newSpeed
+      newSpeed = car.speedKph + accel * tS * 18 / 5 -- 3600/1000
+      newSpeedClamped = clamp 0 50 newSpeed -- we are safe
       posM = car.posM
-      distanceDeltaM = (speedKphToMps newSpeedNotNegative) * tS + accel * tS * tS / 2
+      distanceDeltaM = (speedKphToMps newSpeedClamped) * tS + accel * tS * tS / 2
       distanceDeltaMNotNegative = max 0 distanceDeltaM
       d = car.direction
       sind = sin d
       cosd = cos d
-  in  { car | speedKph <- newSpeedNotNegative
+  in  { car | speedKph <- newSpeedClamped
             , posM <- { posM | xM <- posM.xM + distanceDeltaMNotNegative*cosd
                              , yM <- posM.yM + distanceDeltaMNotNegative*sind } } 
