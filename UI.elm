@@ -35,8 +35,9 @@ worldStep input world =
 simulation world = 
   let { viewport, objs } = world
       { canvas } = viewport
-      (w, h) = (round canvas.widthC, round canvas.heightC) 
-      os = justs . map (Draw.drawObj viewport) <| objs
+      (w, h) = (round canvas.widthC, round canvas.heightC)
+      sorted = Draw.sortByDrawingOrder objs 
+      os = justs . map (Draw.drawObj viewport) <| sorted
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
   in  collage w h ([ boundary ] ++ os)
 

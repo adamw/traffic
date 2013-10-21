@@ -1,4 +1,4 @@
-module Draw(drawObj) where
+module Draw(drawObj, sortByDrawingOrder) where
 
 import open Model
 import open WorldModel
@@ -62,3 +62,9 @@ drawObj worldViewport obj =
     CarObj car -> Just (drawCar worldViewport car)
     TrafficLightObj trafficLight -> Just (drawTrafficLight worldViewport trafficLight)
     _ -> Nothing
+
+sortByDrawingOrder: [ Obj ] -> [ Obj ]
+sortByDrawingOrder objs =
+  let (trafficLights, other) = partition isTrafficLight objs     
+  in  -- drawing traffic lights last, so that they are on top
+      other ++ trafficLights 

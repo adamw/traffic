@@ -17,8 +17,6 @@ distanceIfAhead fromCar toObj =
       then Just r
       else Nothing
 
-isTrafficLight obj = case obj of { TrafficLightObj tl -> True ; _ -> False }
-
 updateIfNearer: Car -> Float -> Obj -> ObjAhead -> ObjAhead
 updateIfNearer fromCar minTlDistM toObj current =
   let dist = distanceIfAhead fromCar toObj
