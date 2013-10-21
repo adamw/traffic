@@ -41,5 +41,7 @@ initialWorld = { viewport = initialWorldViewport,
                           CarObj (createCar -100), 
                           CarObj (createCar -50), 
                           TrafficLightObj (initialTrafficLight initialViewportM),
-                          CarCreatorObj (createCarCreator -150) ], 
+                          CarCreatorObj (createCarCreator -160) ],
+                 annihilator = { minX = -200, maxX = 200, 
+                                 minY = -100, maxY = 100 },
                  info = "X" }

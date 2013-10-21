@@ -23,6 +23,8 @@ type TrafficLight = { posM: PosM,
 
 type CarCreator = { posM: PosM, direction: Float }
 
+type Annihilator = { minX: Float, maxX: Float, minY: Float, maxY: Float }
+
 data Obj = CarObj Car 
          | TrafficLightObj TrafficLight
          | CarCreatorObj CarCreator

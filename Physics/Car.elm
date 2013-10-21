@@ -79,6 +79,7 @@ accelForCarGivenAhead car objAheadParams =
 minSeparationFromM obj = case obj of
   CarObj car -> car.sizeM.lengthM / 2 + 2
   TrafficLightObj tl -> 3
+  _ -> 0
              
 firstAheadOrDummyParams: Maybe (Obj, Float) -> ObjAheadParams
 firstAheadOrDummyParams objAhead =

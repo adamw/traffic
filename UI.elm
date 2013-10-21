@@ -28,7 +28,7 @@ worldStep input world =
     PanUpInput         -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
     PanDownInput       -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
     ToggleTrafficLight -> updateWorldObjs world <| Physics.toggleTrafficLight
-    TickInput t        -> updateWorldObjs world <| Physics.updateObjs t
+    TickInput t        -> updateWorldObjs world <| Physics.updateObjs t world.annihilator
 
 -- LAYOUT
 
