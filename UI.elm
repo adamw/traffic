@@ -93,6 +93,8 @@ createViewportCtrlBtn (label, input) =
       layedOut = flow right btns
   in  (layedOut, signals)
 
+-- TIME CONTROLS
+
 -- WIRE
 
 ticker = TickInput <~ fps 25
