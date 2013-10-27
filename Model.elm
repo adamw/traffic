@@ -3,7 +3,7 @@ module Model where
 -- m suffix means meters
 type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
-type ViewportM = { sizeM: sizeM, centerM: PosM }
+type ViewportM = { sizeM: SizeM, centerM: PosM }
 
 type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float, aMss: Float }
 

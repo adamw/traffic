@@ -44,4 +44,5 @@ initialWorld = { viewport = initialWorldViewport,
                           CarCreatorObj (createCarCreator -160) ],
                  annihilator = { minX = -200, maxX = 200, 
                                  minY = -100, maxY = 100 },
-                 info = "X" }
+                 info = "X",
+                 timeMultiplier = 1.0 }

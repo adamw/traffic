@@ -6,12 +6,14 @@ import open WorldModel
 import Graphics.Input
 import Physics
 import Draw
+import SimulationSpeed
 
 -- WORLD SETUP
 
 data Input = ZoomInInput | ZoomOutInput 
   | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
-  | ToggleTrafficLight
+  | ToggleTrafficLightInput
+  | SpeedUpInput | SlowDownInput
   | TickInput Time
 
 updateWorldObjs world updateFn =
@@ -27,8 +29,12 @@ worldStep input world =
     PanRightInput      -> panWorldViewport  0.5 0 . appendToWorldInfo "R" <| world
     PanUpInput         -> panWorldViewport 0  0.5 . appendToWorldInfo "U" <| world
     PanDownInput       -> panWorldViewport 0 -0.5 . appendToWorldInfo "D" <| world
-    ToggleTrafficLight -> updateWorldObjs world <| Physics.toggleTrafficLight
-    TickInput t        -> updateWorldObjs world <| Physics.updateObjs t world.annihilator
+    SpeedUpInput       -> SimulationSpeed.speedOfSimulationUp world
+    SlowDownInput      -> SimulationSpeed.speedOfSimulationDown world
+    ToggleTrafficLightInput -> updateWorldObjs world <| Physics.toggleTrafficLight
+    TickInput t        -> 
+      let updateFn = Physics.updateObjs (SimulationSpeed.adjustTime world t) world.annihilator
+      in  updateWorldObjs world <| updateFn
 
 -- LAYOUT
 
@@ -41,9 +47,9 @@ simulation world =
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
   in  collage w h ([ boundary ] ++ os)
 
-areaInfo world =
+worldInfo world =
   let viewportM = world.viewport.viewportM
-      parts = [ "Current area: length = ",
+      areaParts = [ "Current area: length = ",
                 show viewportM.sizeM.lengthM,
                 ", width: ",
                 show viewportM.sizeM.widthM,
@@ -52,8 +58,11 @@ areaInfo world =
                 ", ",
                 show viewportM.centerM.yM,
                 ")" ]
-      partsCombined = foldr (++) "" parts
-  in  (asText partsCombined)
+      areaPartsCombined = foldr (++) "" areaParts
+      areaPartsText = plainText areaPartsCombined
+      speedString = "Current simulation speed: " ++ (show world.timeMultiplier) ++ "x"
+      speedText = plainText speedString
+  in  flow down [ areaPartsText, speedText ]
 
 debugObj world obj =
   case obj of
@@ -62,14 +71,15 @@ debugObj world obj =
     _ -> asText <| obj
 
 debug world = 
-  let debugs = map (debugObj world) world.objs
-      x = "x"
-  in  flow down (debugs ++ [ asText world.info ] ++ [ asText x ])
+  let debugs = map (debugObj world) world.objs      
+  in  flow down ({--debugs ++--} [ asText world.info ])
 
-(tlToggleEl, tlToggleInput) = 
-  let (btnEl, btnSignal) = Graphics.Input.button "Change traffic light" 
-      btnInput = sampleOn btnSignal (constant ToggleTrafficLight)
-  in  (btnEl, btnInput)  
+buttonEmittingInput text input =
+  let (btnEl, btnSignal) = Graphics.Input.button text 
+      btnInput = sampleOn btnSignal (constant input)
+  in  (btnEl, btnInput) 
+
+(tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic light" ToggleTrafficLightInput
 
 -- VIEWPORT CONTROLS
 
@@ -81,28 +91,30 @@ viewportCtrlBtnsSpecs = [
   ("up", PanUpInput),
   ("down", PanDownInput) ]
 
-createViewportCtrlBtn: (String, Input) -> (Element, Signal Input)
-createViewportCtrlBtn (label, input) = 
-  let (btnEl, btnSignal) = Graphics.Input.button label 
-      btnInput = sampleOn btnSignal (constant input)
-  in  (btnEl, btnInput)
-
 (viewportCtrlBtnsLayout, viewportCtrlBtnsSignals) = 
-  let created = map createViewportCtrlBtn viewportCtrlBtnsSpecs
+  let created = map (uncurry buttonEmittingInput) viewportCtrlBtnsSpecs
       (btns, signals) = unzip created
       layedOut = flow right btns
   in  (layedOut, signals)
 
 -- TIME CONTROLS
 
+(speedUpEl, speedUpInput) = buttonEmittingInput "Speed up" SpeedUpInput
+(slowDownEl, slowDownInput) = buttonEmittingInput "Slow down" SlowDownInput
+
+simSpeedCtrlsLayout = flow right [ speedUpEl, slowDownEl ] 
+
 -- WIRE
 
 ticker = TickInput <~ fps 25
 
-inputSignal = merges (ticker :: tlToggleInput :: viewportCtrlBtnsSignals)
+inputSignal = merges (ticker :: tlToggleInput :: 
+  speedUpInput :: slowDownInput ::
+  viewportCtrlBtnsSignals)
 
 layout world = flow down [ simulation world, 
-                           areaInfo world, 
-                           --debug world, 
+                           worldInfo world, 
+                           -- debug world, 
                            viewportCtrlBtnsLayout,
-                           tlToggleEl ]
+                           tlToggleEl,
+                           simSpeedCtrlsLayout ]

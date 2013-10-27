@@ -11,7 +11,8 @@ type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
 type World = { viewport: WorldViewport, 
                objs: [ Obj ],
                annihilator: Annihilator,
-               info: String }              
+               info: String,
+               timeMultiplier: Float }              
 
 -- WORLD UPDATES
 
