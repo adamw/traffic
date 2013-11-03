@@ -5,18 +5,29 @@ import Physics.Car
 import Physics.TrafficLight
 import Physics.CarCreator
 import Physics.Annihilator
+import Physics.ObjOrderer
 
-updateObj: Time -> [ Obj ] -> Obj -> [ Obj ]
-updateObj t allObjs obj =
+updateObj: Time -> [ ObjWithDist ] -> Obj -> [ Obj ]
+updateObj t objsAheadWithDist obj =
   case obj of
-    CarObj car -> [ CarObj (Physics.Car.drive t allObjs car) ]
+    CarObj car -> [ CarObj (Physics.Car.drive t objsAheadWithDist car) ]
     TrafficLightObj tl -> [ TrafficLightObj (Physics.TrafficLight.update t tl) ]
-    CarCreatorObj cc  -> cons (Physics.CarCreator.createIfVacant cc allObjs) [ obj ]
+    CarCreatorObj cc -> cons (Physics.CarCreator.createIfVacant cc objsAheadWithDist) [ obj ]
     _ -> [ obj ]
+
+updateObjCluster: Time -> [ Obj ] -> [ ObjWithDist ] -> [ Obj ]
+updateObjCluster t acc objsWithDist  =
+  case objsWithDist of
+    [] -> acc
+    objWithDist :: tl ->
+      let updated = updateObj t tl objWithDist.obj
+      in  updateObjCluster t (updated ++ acc) tl 
 
 updateObjsTimeQuant: Time -> Annihilator -> [ Obj ] -> [ Obj ]
 updateObjsTimeQuant t ann objs = 
-  let updated = foldr ((++) . updateObj t objs) [] objs
+  let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters objs
+      updatedClusters = map (updateObjCluster t []) orderedObjClusters
+      updated = concat updatedClusters
   in  justs <| map (Physics.Annihilator.annihilateIfOutOfBounds ann) updated 
 
 timeQuantMs = 100

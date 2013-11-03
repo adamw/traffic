@@ -1,7 +1,6 @@
 module Physics.Car(drive) where
 
 import open Model
-import NearestObstacle
 
 -- UPDATE
 
@@ -91,18 +90,35 @@ firstAheadOrDummyParams objAhead =
                  minSeparationM = 0,
                  distanceM = 100000 } -- pretending there's an object far far away
 
-accelForCar: [ Obj ] -> Car -> Float
-accelForCar allObjs car =
+isObstacle obj distMToObj stoppingDistanceM =
+  if distMToObj < stoppingDistanceM
+  then False
+  else case obj of
+    CarObj c -> True
+    TrafficLightObj tl -> tl.state /= GreenTrafficLight
+    _ -> False
+
+findFirstAhead distMSoFar objsAheadWithDist stoppingDistanceM =
+  case objsAheadWithDist of
+    [] -> Nothing
+    objWithDist :: tl ->
+      let newDistM = distMSoFar + objWithDist.distMToPrev
+      in  if isObstacle objWithDist.obj newDistM stoppingDistanceM
+          then Just (objWithDist.obj, newDistM)
+          else findFirstAhead newDistM tl stoppingDistanceM
+
+accelForCar: [ ObjWithDist ] -> Car -> Float
+accelForCar objsAheadWithDist car =
       -- -1 because there's always a safety extra distance and we want to prevent
       -- running the red if the distance is close to (numerically) the stopping distance
   let stoppingDistanceM = (speedAdjustDistanceM car.speedKph) - 1
-      firstAhead = NearestObstacle.findFirstAhead allObjs car stoppingDistanceM
+      firstAhead = findFirstAhead 0 objsAheadWithDist stoppingDistanceM
       firstAheadParams = firstAheadOrDummyParams firstAhead
   in  accelForCarGivenAhead car firstAheadParams
 
-drive: Time -> [ Obj ] -> Car -> Car
-drive t allObjs car =
-  let accel = accelForCar allObjs car
+drive: Time -> [ ObjWithDist ] -> Car -> Car
+drive t objsAheadWithDist car =
+  let accel = accelForCar objsAheadWithDist car
       tS = t / 1000
       newSpeed = car.speedKph + accel * tS * 18 / 5 -- 3600/1000
       newSpeedClamped = clamp 0 50 newSpeed -- we are safe

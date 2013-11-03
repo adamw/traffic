@@ -8,6 +8,8 @@ import Physics
 import Draw
 import SimulationSpeed
 
+import Physics.ObjOrderer
+
 -- WORLD SETUP
 
 data Input = ZoomInInput | ZoomOutInput 
@@ -71,8 +73,9 @@ debugObj world obj =
     _ -> asText <| obj
 
 debug world = 
-  let debugs = map (debugObj world) world.objs      
-  in  flow down ({--debugs ++--} [ asText world.info ])
+  let debugs = map (debugObj world) world.objs    
+      cs = Physics.ObjOrderer.orderedObjClusters world.objs  
+  in  flow down ({--debugs ++--} [ asText cs{--world.info--} ])
 
 buttonEmittingInput text input =
   let (btnEl, btnSignal) = Graphics.Input.button text 
