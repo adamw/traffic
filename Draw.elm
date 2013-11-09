@@ -1,7 +1,7 @@
 module Draw(drawObj, sortByDrawingOrder) where
 
 import open Model
-import open WorldModel
+import open UIModel
 
 -- TRANSLATION
 

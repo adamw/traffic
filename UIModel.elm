@@ -1,4 +1,4 @@
-module WorldModel where
+module UIModel where
 
 import open Model
 
@@ -8,39 +8,38 @@ type SizeC = { widthC: Float, heightC: Float }
 
 type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
 
-type World = { viewport: WorldViewport, 
-               objs: [ Obj ],
-               annihilator: Annihilator,
-               info: String,
-               timeMultiplier: Float }              
+type UIWorld = { viewport: WorldViewport, 
+                 world: World,
+                 info: String,
+                 timeMultiplier: Float }              
 
 -- WORLD UPDATES
 
-updateWorldViewportM: (ViewportM -> ViewportM) -> World -> World
-updateWorldViewportM updateFn world =
-  let oldWorldViewport = world.viewport
+updateViewportM: (ViewportM -> ViewportM) -> UIWorld -> UIWorld
+updateViewportM updateFn uiworld =
+  let oldWorldViewport = uiworld.viewport
       oldViewportM = oldWorldViewport.viewportM
       newViewportM = updateFn oldViewportM
       newWorldViewport = { oldWorldViewport | viewportM <- newViewportM }
-  in  { world | viewport <- newWorldViewport }
+  in  { uiworld | viewport <- newWorldViewport }
 
-scaleWorldViewport: Float -> World -> World
-scaleWorldViewport factor =                 
-  updateWorldViewportM (\oldViewportM ->
+scaleViewport: Float -> UIWorld -> UIWorld
+scaleViewport factor =                 
+  updateViewportM (\oldViewportM ->
       let oldViewportSize = oldViewportM.sizeM
           newViewportSize = { lengthM = oldViewportSize.lengthM * factor, 
                               widthM  = oldViewportSize.widthM * factor }
       in  { oldViewportM | sizeM <- newViewportSize }
     )
 
-panWorldViewport: Float -> Float -> World -> World
-panWorldViewport xFactor yFactor = 
-  updateWorldViewportM (\oldViewportM ->
+panViewport: Float -> Float -> UIWorld -> UIWorld
+panViewport xFactor yFactor = 
+  updateViewportM (\oldViewportM ->
       let oldViewportCenter = oldViewportM.centerM
           newViewportCenter = { xM = oldViewportCenter.xM + xFactor * oldViewportM.sizeM.lengthM, 
                                 yM = oldViewportCenter.yM + yFactor * oldViewportM.sizeM.widthM }
       in  { oldViewportM | centerM <- newViewportCenter }
     )
 
-appendToWorldInfo: String -> World -> World
-appendToWorldInfo what world = { world | info <- world.info ++ what }
+appendToInfo: String -> UIWorld -> UIWorld
+appendToInfo what uiworld = { uiworld | info <- uiworld.info ++ what }

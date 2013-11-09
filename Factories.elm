@@ -1,7 +1,7 @@
 module Factories where
 
 import open Model
-import open WorldModel
+import open UIModel
 
 mainCanvas: SizeC
 mainCanvas = { widthC = 1000, heightC = 500 }
@@ -38,21 +38,24 @@ createTrafficLight clusterId xOffset yOffset degs = { posM = { xM = xOffset, yM 
 initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
-initialWorld: World
-initialWorld = { viewport = initialWorldViewport, 
-                 objs = [ CarObj (createCar 1 -150), 
-                          CarObj (createCar 1 -100), 
-                          CarObj (createCar 1 -50), 
-                          TrafficLightObj (createTrafficLight 2 -10  -5 0), -- L->R, bottom lane
-                          TrafficLightObj (createTrafficLight 1 -10   5 0), -- L->R, top lane
-                          TrafficLightObj (createTrafficLight 3 0    15 270), -- T->B                          
-                          TrafficLightObj (createTrafficLight 4 10  -15 90), -- B->T
-                          CarCreatorObj (createCarCreator 2 -160 -5 0),
-                          CarCreatorObj (createCarCreator 1 -160  5 0),
-                          CarCreatorObj (createCarCreator 3 0   80 270),
-                          CarCreatorObj (createCarCreator 4 10 -80 90) 
+initialUIWorld: UIWorld
+initialUIWorld = 
+  let world = { objs = [ CarObj (createCar 1 -150), 
+                         CarObj (createCar 1 -100), 
+                         CarObj (createCar 1 -50), 
+                         TrafficLightObj (createTrafficLight 2 -10  -5 0), -- L->R, bottom lane
+                         TrafficLightObj (createTrafficLight 1 -10   5 0), -- L->R, top lane
+                         TrafficLightObj (createTrafficLight 3 0    15 270), -- T->B                          
+                         TrafficLightObj (createTrafficLight 4 10  -15 90), -- B->T
+                         CarCreatorObj (createCarCreator 2 -160 -5 0),
+                         CarCreatorObj (createCarCreator 1 -160  5 0),
+                         CarCreatorObj (createCarCreator 3 0   80 270),
+                         CarCreatorObj (createCarCreator 4 10 -80 90) 
                         ],
-                 annihilator = { minX = -200, maxX = 200, 
-                                 minY = -100, maxY = 100 },
-                 info = "X",
-                 timeMultiplier = 1.0 }
+                ann = { minX = -200, maxX = 200, 
+                        minY = -100, maxY = 100 } 
+              }
+  in  { viewport = initialWorldViewport,
+        world = world, 
+        info = "X",
+        timeMultiplier = 1.0 }

@@ -23,12 +23,16 @@ updateObjCluster t acc objsWithDist  =
       let updated = updateObj t tl objWithDist.obj
       in  updateObjCluster t (updated ++ acc) tl 
 
-updateObjsTimeQuant: Time -> Annihilator -> [ Obj ] -> [ Obj ]
-updateObjsTimeQuant t ann objs = 
-  let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters objs
+updateWorldObjs world newObjs = { world | objs <- newObjs }
+
+updateObjsTimeQuant: Time -> World -> World
+updateObjsTimeQuant t world = 
+  let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters world.objs
       updatedClusters = map (updateObjCluster t []) orderedObjClusters
       updated = concat updatedClusters
-  in  justs <| map (Physics.Annihilator.annihilateIfOutOfBounds ann) updated 
+      annFn = Physics.Annihilator.annihilateIfOutOfBounds world.ann
+      annihilated = justs <| map annFn updated
+  in  updateWorldObjs world annihilated
 
 timeQuantMs = 100
 
@@ -36,16 +40,16 @@ timeQuantMs = 100
 We assume that decisions can be changed every 100ms. Hence if the time span to cover
 is longer, we chunk it into smaller pieces.
 --}
-updateObjs: Time -> Annihilator -> [ Obj ] -> [ Obj ]
-updateObjs t ann objs = 
+updateObjs: Time -> World -> World
+updateObjs t world = 
   if (t > timeQuantMs) 
-    then updateObjs (t-timeQuantMs) ann (updateObjsTimeQuant timeQuantMs ann objs) 
-    else updateObjsTimeQuant t ann objs
+    then updateObjs (t-timeQuantMs) (updateObjsTimeQuant timeQuantMs world) 
+    else updateObjsTimeQuant t world
 
 toggleIfTrafficLight obj =
   case obj of
     TrafficLightObj tl -> TrafficLightObj (Physics.TrafficLight.toggle tl)
     _ -> obj
 
-toggleTrafficLight: [ Obj ] -> [ Obj ]
-toggleTrafficLight objs = map (toggleIfTrafficLight) objs
+toggleTrafficLight: World -> World
+toggleTrafficLight world = updateWorldObjs world <| map (toggleIfTrafficLight) world.objs

@@ -1,25 +1,25 @@
 module SimulationSpeed(speedOfSimulationUp, speedOfSimulationDown, adjustTime) where
 
-import open WorldModel
+import open UIModel
 
 possibleSpeeds = [ 0.5, 1.0, 1.5, 2.0, 4.0, 8.0, 16.0, 32.0 ]
 
-speedOfSimulationUp: World -> World
-speedOfSimulationUp world = changeSpeedIdx world (\i -> i + 1)
+speedOfSimulationUp: UIWorld -> UIWorld
+speedOfSimulationUp uiworld = changeSpeedIdx uiworld (\i -> i + 1)
 
-speedOfSimulationDown: World -> World
-speedOfSimulationDown world = changeSpeedIdx world (\i -> i - 1)
+speedOfSimulationDown: UIWorld -> UIWorld
+speedOfSimulationDown uiworld = changeSpeedIdx uiworld (\i -> i - 1)
 
-adjustTime: World -> Float -> Float
-adjustTime world t = t * world.timeMultiplier
+adjustTime: UIWorld -> Float -> Float
+adjustTime uiworld t = t * uiworld.timeMultiplier
 
-changeSpeedIdx world changeIdxFn =
-  let currentMultiplier = world.timeMultiplier
+changeSpeedIdx uiworld changeIdxFn =
+  let currentMultiplier = uiworld.timeMultiplier
       currentIdx = indexOf currentMultiplier possibleSpeeds 0
       newIdx = changeIdxFn currentIdx
       clampedIdx = clamp 0 ((length possibleSpeeds) - 1) newIdx
       newMultiplier = atIndex clampedIdx possibleSpeeds
-  in  { world | timeMultiplier <- newMultiplier }
+  in  { uiworld | timeMultiplier <- newMultiplier }
 
 indexOf el list idxCandidate =
   case list of

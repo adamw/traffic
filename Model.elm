@@ -35,6 +35,8 @@ data Obj = CarObj Car
 
 type ObjWithDist = { obj: Obj, distMToPrev: Float }
 
+type World = { objs: [ Obj ], ann: Annihilator }
+
 posMOfObj: Obj -> PosM
 posMOfObj obj =
   case obj of
