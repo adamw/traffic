@@ -7,8 +7,12 @@ type PosM = { xM: Float, yM: Float }
 type SizeM = { lengthM: Float, widthM: Float }
 type ViewportM = { sizeM: SizeM, centerM: PosM }
 
-type Car = { posM: PosM, speedKph: Float, sizeM: SizeM, direction: Float, 
-             aMss: Float, clusterId: ClusterId }
+type Positioned a = { a | posM: PosM }
+type Clustered a = { a | clusterId: ClusterId }
+type Directed a = { a | direction: Float }
+type ObjParams a = Positioned (Clustered (Directed a)) 
+
+type Car = ObjParams { speedKph: Float, sizeM: SizeM, aMss: Float }
 
 data TLState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
 
@@ -18,14 +22,11 @@ noOpTLUpdateFn = TLUpdateFn { fn = \(state, t) -> (state, noOpTLUpdateFn) }
 
 type TLSwitchTimings = { yellowAfterRed: Float,
                          yellowAfterGreen: Float }
-type TrafficLight = { posM: PosM, 
-                      direction: Float,
-                      state: TLState, 
-                      updateFn: TLUpdateFn,
-                      switchTimings: TLSwitchTimings,
-                      clusterId: ClusterId }
+type TrafficLight = ObjParams { state: TLState, 
+                                updateFn: TLUpdateFn,
+                                switchTimings: TLSwitchTimings }
 
-type CarCreator = { posM: PosM, direction: Float, clusterId: ClusterId }
+type CarCreator = ObjParams {}
 
 type Annihilator = { minX: Float, maxX: Float, minY: Float, maxY: Float }
 
