@@ -14,7 +14,7 @@ import Physics.ObjOrderer
 
 data Input = ZoomInInput | ZoomOutInput 
   | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
-  | ToggleTrafficLightInput
+  | ToggleTrafficLightsInput
   | SpeedUpInput | SlowDownInput
   | TickInput Time
 
@@ -34,10 +34,10 @@ uiworldStep input uiworld =
     PanDownInput       -> panViewport 0 -0.5 . appendToInfo "D" <| uiworld
     SpeedUpInput       -> SimulationSpeed.speedOfSimulationUp uiworld
     SlowDownInput      -> SimulationSpeed.speedOfSimulationDown uiworld
-    ToggleTrafficLightInput -> updateWorld uiworld <| Physics.toggleTrafficLight
+    ToggleTrafficLightsInput -> updateWorld uiworld Physics.switchTrafficLights
     TickInput t        -> 
-      let updateFn = Physics.updateObjs (SimulationSpeed.adjustTime uiworld t)
-      in  updateWorld uiworld <| updateFn
+      let updateFn = Physics.update (SimulationSpeed.adjustTime uiworld t)
+      in  updateWorld uiworld updateFn
 
 -- LAYOUT
 
@@ -82,7 +82,7 @@ buttonEmittingInput text input =
       btnInput = sampleOn btnSignal (constant input)
   in  (btnEl, btnInput) 
 
-(tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic light" ToggleTrafficLightInput
+(tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic lights" ToggleTrafficLightsInput
 
 -- VIEWPORT CONTROLS
 

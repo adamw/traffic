@@ -14,21 +14,25 @@ type ObjParams a = Positioned (Clustered (Directed a))
 
 type Car = ObjParams { speedKph: Float, sizeM: SizeM, aMss: Float }
 
+type TLId = Int
 data TLState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight
-
--- work-around for https://github.com/evancz/Elm/issues/294
-data TLUpdateFn = TLUpdateFn { fn: (TLState, Time) -> (TLState, TLUpdateFn) }
-noOpTLUpdateFn = TLUpdateFn { fn = \(state, t) -> (state, noOpTLUpdateFn) }
-
-type TLSwitchTimings = { yellowAfterRed: Float,
-                         yellowAfterGreen: Float }
-type TrafficLight = ObjParams { state: TLState, 
-                                updateFn: TLUpdateFn,
-                                switchTimings: TLSwitchTimings }
+type TrafficLight = ObjParams { tlId: TLId,
+                                state: TLState }
 
 type CarCreator = ObjParams {}
 
 type Annihilator = { minX: Float, maxX: Float, minY: Float, maxY: Float }
+
+data TLCtrlStep = SwitchStep TLState TLId
+                | WaitStep Time
+type TrafficLightsCtrl = {
+  groupA: [ TLId ],
+  groupB: [ TLId ],
+  yellowAfterRed: Float,
+  yellowAfterGreen: Float,
+  betweenRed: Float,
+  steps: [ TLCtrlStep ]
+}
 
 data Obj = CarObj Car 
          | TrafficLightObj TrafficLight
@@ -36,7 +40,9 @@ data Obj = CarObj Car
 
 type ObjWithDist = { obj: Obj, distMToPrev: Float }
 
-type World = { objs: [ Obj ], ann: Annihilator }
+type World = { objs: [ Obj ], 
+               ann: Annihilator,
+               tlCtrl: TrafficLightsCtrl }
 
 posMOfObj: Obj -> PosM
 posMOfObj obj =

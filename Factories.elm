@@ -23,37 +23,43 @@ createCarCreator clusterId xOffset yOffset degs = { posM = { xM = xOffset, yM = 
                                                     direction = degrees degs,
                                                     clusterId = clusterId }
 
-createTrafficLight: ClusterId -> Float -> Float -> Float -> TrafficLight
-createTrafficLight clusterId xOffset yOffset degs = { posM = { xM = xOffset, yM = yOffset },
-                                                      direction = degrees degs,
-                                                      state = RedTrafficLight,
-                                                      updateFn = noOpTLUpdateFn,
-                                                      switchTimings = {
-                                                        yellowAfterRed = 1.0 * oneSecond, 
-                                                        yellowAfterGreen = 3.0 * oneSecond
-                                                      },
-                                                      clusterId = clusterId  
-                                                    }                         
+createTrafficLight: ClusterId -> TLId -> TLState -> Float -> Float -> Float -> TrafficLight
+createTrafficLight clusterId tlId tlState xOffset yOffset degs = 
+  { tlId = tlId,
+    posM = { xM = xOffset, yM = yOffset },
+    direction = degrees degs,
+    state = tlState,
+    clusterId = clusterId  
+  }                         
 
 initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
 initialUIWorld: UIWorld
 initialUIWorld = 
-  let world = { objs = [ CarObj (createCar 1 -150), 
-                         CarObj (createCar 1 -100), 
-                         CarObj (createCar 1 -50), 
-                         TrafficLightObj (createTrafficLight 2 -10  -5 0), -- L->R, bottom lane
-                         TrafficLightObj (createTrafficLight 1 -10   5 0), -- L->R, top lane
-                         TrafficLightObj (createTrafficLight 3 0    15 270), -- T->B                          
-                         TrafficLightObj (createTrafficLight 4 10  -15 90), -- B->T
-                         CarCreatorObj (createCarCreator 2 -160 -5 0),
-                         CarCreatorObj (createCarCreator 1 -160  5 0),
-                         CarCreatorObj (createCarCreator 3 0   80 270),
-                         CarCreatorObj (createCarCreator 4 10 -80 90) 
-                        ],
+  let worldObjs = [ CarObj (createCar 1 -150), 
+                    CarObj (createCar 1 -100), 
+                    CarObj (createCar 1 -50), 
+                    TrafficLightObj (createTrafficLight 2 1 RedTrafficLight   -10  -5 0), -- L->R, bottom lane
+                    TrafficLightObj (createTrafficLight 1 2 RedTrafficLight   -10   5 0), -- L->R, top lane
+                    TrafficLightObj (createTrafficLight 3 3 GreenTrafficLight 0    15 270), -- T->B                          
+                    TrafficLightObj (createTrafficLight 4 4 GreenTrafficLight 10  -15 90), -- B->T
+                    CarCreatorObj (createCarCreator 2 -160 -5 0),
+                    CarCreatorObj (createCarCreator 1 -160  5 0),
+                    CarCreatorObj (createCarCreator 3 0   80 270),
+                    CarCreatorObj (createCarCreator 4 10 -80 90) 
+                  ]
+      world = { objs = worldObjs,
                 ann = { minX = -200, maxX = 200, 
-                        minY = -100, maxY = 100 } 
+                        minY = -100, maxY = 100 },
+                tlCtrl = {
+                  groupA = [ 1, 2 ],
+                  groupB = [ 3, 4 ],
+                  yellowAfterRed = 1.0 * oneSecond, 
+                  yellowAfterGreen = 3.0 * oneSecond,
+                  betweenRed = 1.0 * oneSecond,
+                  steps = []
+                } 
               }
   in  { viewport = initialWorldViewport,
         world = world, 
