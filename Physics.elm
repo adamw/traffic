@@ -24,15 +24,22 @@ updateObjCluster t acc objsWithDist  =
 
 updateWorldObjs world newObjs = { world | objs <- newObjs }
 
-updateTimeQuant: Time -> World -> World
-updateTimeQuant t world = 
+updateObjs t world =
   let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters world.objs
       updatedClusters = map (updateObjCluster t []) orderedObjClusters
       updated = concat updatedClusters
-      annFn = Physics.Annihilator.annihilateIfOutOfBounds world.ann
-      annihilated = justs <| map annFn updated
-      updatedWorld = updateWorldObjs world annihilated
-  in  Physics.TrafficLights.update t updatedWorld
+  in  updateWorldObjs world updated
+
+updateAnn world =
+  let annFn = Physics.Annihilator.annihilateIfOutOfBounds world.ann
+      annihilated = justs <| map annFn world.objs
+  in  updateWorldObjs world annihilated
+
+updateTimeQuant: Time -> World -> World
+updateTimeQuant t world = 
+  let w1 = updateObjs t world
+      w2 = updateAnn w1
+  in  Physics.TrafficLights.update t w2
 
 timeQuantMs = 100
 
