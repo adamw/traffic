@@ -75,39 +75,36 @@ accelForCarGivenAhead car objAheadParams =
                    -- adjsuting speed
                    else computeDecel dvKph ddM
 
-minSeparationFromM obj = case obj of
-  CarObj car -> car.sizeM.lengthM / 2 + 2
-  TrafficLightObj tl -> 3
-  _ -> 0
+minSeparationFromM mc = case mc.car of
+  Just car -> car.sizeM.lengthM / 2 + 2
+  Nothing -> 3 -- min separation from everything else
+
+speedKphOf mc = case mc.car of 
+  Just car -> car.speedKph
+  Nothing -> 0
              
-firstAheadOrDummyParams: Maybe (Obj, Float) -> ObjAheadParams
+firstAheadOrDummyParams: Maybe (MaybeCarWithDist, Float) -> ObjAheadParams
 firstAheadOrDummyParams objAhead =
   case objAhead of
-    Just (otherObj, distanceM) -> { speedKph = speedKphOfObj otherObj, 
-                                    minSeparationM = minSeparationFromM otherObj,
-                                    distanceM = distanceM }
-    Nothing -> { speedKph = 0, 
-                 minSeparationM = 0,
-                 distanceM = 100000 } -- pretending there's an object far far away
-
-isObstacle obj distMToObj stoppingDistanceM =
-  if distMToObj < stoppingDistanceM
-  then False
-  else case obj of
-    CarObj c -> True
-    TrafficLightObj tl -> tl.state /= GreenTrafficLight
-    _ -> False
+    Just (otherObjWithDist, distanceM) -> 
+      { speedKph = speedKphOf otherObjWithDist, 
+        minSeparationM = minSeparationFromM otherObjWithDist,
+        distanceM = distanceM }
+    Nothing -> 
+      { speedKph = 0, 
+        minSeparationM = 0,
+        distanceM = 100000 } -- pretending there's an object far far away
 
 findFirstAhead distMSoFar objsAheadWithDist stoppingDistanceM =
   case objsAheadWithDist of
     [] -> Nothing
     objWithDist :: tl ->
       let newDistM = distMSoFar + objWithDist.distMToPrev
-      in  if isObstacle objWithDist.obj newDistM stoppingDistanceM
-          then Just (objWithDist.obj, newDistM)
+      in  if newDistM < stoppingDistanceM
+          then Just (objWithDist, newDistM)
           else findFirstAhead newDistM tl stoppingDistanceM
 
-accelForCar: [ ObjWithDist ] -> Car -> Float
+accelForCar: [ MaybeCarWithDist ] -> Car -> Float
 accelForCar objsAheadWithDist car =
       -- -1 because there's always a safety extra distance and we want to prevent
       -- running the red if the distance is close to (numerically) the stopping distance
@@ -116,7 +113,7 @@ accelForCar objsAheadWithDist car =
       firstAheadParams = firstAheadOrDummyParams firstAhead
   in  accelForCarGivenAhead car firstAheadParams
 
-drive: Time -> [ ObjWithDist ] -> Car -> Car
+drive: Time -> [ MaybeCarWithDist ] -> Car -> Car
 drive t objsAheadWithDist car =
   let accel = accelForCar objsAheadWithDist car
       tS = t / 1000

@@ -2,9 +2,9 @@ module Physics.Annihilator(annihilateIfOutOfBounds) where
 
 import open Model
 
-annihilateIfOutOfBounds: Annihilator -> Obj -> Maybe Obj
+annihilateIfOutOfBounds: Annihilator -> AnyObj -> Maybe AnyObj
 annihilateIfOutOfBounds ann obj =
-  let objPosM = posMOfObj obj
+  let objPosM = obj.posM
       shouldAnnihilate = objPosM.xM < ann.minX || 
         objPosM.xM > ann.maxX ||
         objPosM.yM < ann.minY ||

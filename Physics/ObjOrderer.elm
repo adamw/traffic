@@ -4,22 +4,32 @@ import open Model
 import Dict
 import Util
 
-orderedObjClusters: [ Obj ] -> [ [ ObjWithDist ] ]
-orderedObjClusters objs = 
-  let clusters = clusterObjs objs Dict.empty
-      sortedClusters = map (\c -> Util.mergeSort (clusterLtFn c) c) clusters
-  in  map objsToWithDist sortedClusters 
+type MaybeCar = { car: Maybe Car, obj: AnyObj }
+type MaybeCarsByCluster = Dict.Dict ClusterId [ MaybeCar ]
+
+orderedObjClusters: [ Car ] -> [ TrafficLight ] -> Dict.Dict ClusterId [ MaybeCarWithDist ]
+orderedObjClusters cars tls = 
+  let toCluster = (carsToMaybeCar cars) ++ (tlsToMaybeCar tls)
+      clusters = clusterMcs toCluster Dict.empty
+      sortedClusters = Dict.map (\c -> Util.mergeSort (clusterLtFn c) c) clusters
+  in  Dict.map mcsToWithDist sortedClusters 
 
 -- 
 
-clusterObjs: [ Obj ] -> Dict.Dict Int [ Obj ] -> [ [ Obj ] ]
-clusterObjs objs acc =
-  case objs of
-    [] -> Dict.values acc
-    obj :: otherObjs -> 
-      let clusterId = clusterIdOfObj obj
-          currentClusterObjs = maybe [] id (Dict.lookup clusterId acc)
-      in  clusterObjs otherObjs (Dict.insert clusterId (obj :: currentClusterObjs) acc)
+carsToMaybeCar: [ Car ] -> [ MaybeCar ]
+carsToMaybeCar = map (\c -> { car = Just c, obj = c })
+
+tlsToMaybeCar: [ TrafficLight ] -> [ MaybeCar ]
+tlsToMaybeCar = map (\tl -> { car = Nothing, obj = tl })
+
+clusterMcs: [ MaybeCar ] -> MaybeCarsByCluster -> MaybeCarsByCluster
+clusterMcs mcs acc =
+  case mcs of
+    [] -> acc
+    mc :: otherMcs -> 
+      let clusterId = mc.obj.clusterId
+          currentClusterMcs = maybe [] id (Dict.lookup clusterId acc)
+      in  clusterMcs otherMcs (Dict.insert clusterId (mc :: currentClusterMcs) acc)
 
 degrees0   = degrees 0
 degrees90  = degrees 90
@@ -45,40 +55,33 @@ posMLtFn direction =
      | otherwise                                         -> createPosMLt (<) (>)   
 
 {--
-If two objects have the same position, we order them basing on type.
-Car creators come first, then traffic lights. The important thing is that
-cars come last, so that if a car creator creates a car, the car is "after"
-the creator, and so is visible when checking if next car can be created. 
-Similarly with TL.
+If two objects have the same position, we order them basing on type: cars come
+last.
 --}
-samePosObjLtFn o1 o2 =
-  case (o1, o2) of
-    (CarCreatorObj cc, _) -> True
-    (TrafficLightObj tl, _) -> True
-    _ -> False
+samePosMcLtFn mc1 mc2 = if isJust mc1.car then False else True
 
-clusterLtFn: [ Obj ] -> (Obj -> Obj -> Bool)
-clusterLtFn objs =
-  case objs of
-    [] -> (\o1 -> \o2 -> True)
-    obj :: _ -> 
-      let direction = directionOfObj obj 
+clusterLtFn: [ MaybeCar ] -> (MaybeCar -> MaybeCar -> Bool)
+clusterLtFn mcs =
+  case mcs of
+    [] -> (\mc1 -> \mc2 -> True)
+    mc :: _ -> 
+      let direction = mc.obj.direction 
           posMLt = posMLtFn direction
-      in  \o1 -> \o2 -> 
-        let pM1 = posMOfObj o1
-            pM2 = posMOfObj o2
-            pMEqual = (pM1.xM == pM2.xM) && (pM1.yM == pM2.yM)
+      in  \mc1 -> \mc2 -> 
+        let pM1 = mc1.obj.posM
+            pM2 = mc2.obj.posM
+            pMEqual = (coordEq pM1.xM pM2.xM) && (coordEq pM1.yM pM2.yM)
         in  if (pMEqual) 
-            then samePosObjLtFn o1 o2 
-            else posMLt (posMOfObj o1, posMOfObj o2)
+            then samePosMcLtFn mc1 mc2 
+            else posMLt (pM1, pM2)
 
-objToWithDist (obj, prevObj) =
-  { obj = obj, distMToPrev = distM (posMOfObj obj) (posMOfObj prevObj) }
+mcToWithDist (mc, prevMc) =
+  { mc | distMToPrev = distM mc.obj.posM prevMc.obj.posM }
 
-objsToWithDist objs = 
-  case objs of
+mcsToWithDist mcs = 
+  case mcs of
     [] -> []
-    obj :: tl -> 
-      let objAndPrevPairs = zip tl objs
-          firstWithDist = { obj = obj, distMToPrev = 0 }
-      in  firstWithDist :: (map objToWithDist objAndPrevPairs)
+    mc :: tl -> 
+      let mcsAndPrevPairs = zip tl mcs
+          firstWithDist = { mc | distMToPrev = 0 }
+      in  firstWithDist :: (map mcToWithDist mcsAndPrevPairs)

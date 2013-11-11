@@ -1,4 +1,4 @@
-module Draw(drawObj, sortByDrawingOrder) where
+module Draw(drawCar, drawTrafficLight) where
 
 import open Model
 import open UIModel
@@ -55,16 +55,3 @@ drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
       wholeLight = group [ backingRect, boundingRect, redLight, yellowLight, greenLight ]
   in  wholeLight |> move (pos.xC, pos.yC)
                  |> rotate trafficLight.direction
-
-drawObj: WorldViewport -> Obj -> Maybe Form
-drawObj worldViewport obj = 
-  case obj of
-    CarObj car -> Just (drawCar worldViewport car)
-    TrafficLightObj trafficLight -> Just (drawTrafficLight worldViewport trafficLight)
-    _ -> Nothing
-
-sortByDrawingOrder: [ Obj ] -> [ Obj ]
-sortByDrawingOrder objs =
-  let (trafficLights, other) = partition isTrafficLight objs     
-  in  -- drawing traffic lights last, so that they are on top
-      other ++ trafficLights 

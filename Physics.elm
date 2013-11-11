@@ -6,40 +6,34 @@ import Physics.TrafficLights
 import Physics.CarCreator
 import Physics.Annihilator
 import Physics.ObjOrderer
+import Dict
 
-updateObj: Time -> [ ObjWithDist ] -> Obj -> [ Obj ]
-updateObj t objsAheadWithDist obj =
-  case obj of
-    CarObj car -> [ CarObj (Physics.Car.drive t objsAheadWithDist car) ]
-    CarCreatorObj cc -> cons (Physics.CarCreator.createIfVacant cc objsAheadWithDist) [ obj ]
-    _ -> [ obj ]
-
-updateObjCluster: Time -> [ Obj ] -> [ ObjWithDist ] -> [ Obj ]
+updateObjCluster: Time -> [ Car ] -> [ MaybeCarWithDist ] -> [ Car ]
 updateObjCluster t acc objsWithDist  =
   case objsWithDist of
     [] -> acc
     objWithDist :: tl ->
-      let updated = updateObj t tl objWithDist.obj
-      in  updateObjCluster t (updated ++ acc) tl 
+      case objWithDist.car of
+        Just car -> 
+          let updated = Physics.Car.drive t tl car
+          in  updateObjCluster t (updated ++ acc) tl 
+        Nothing -> updateObjCluster t acc tl
 
-updateWorldObjs world newObjs = { world | objs <- newObjs }
-
-updateObjs t world =
-  let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters world.objs
-      updatedClusters = map (updateObjCluster t []) orderedObjClusters
-      updated = concat updatedClusters
-  in  updateWorldObjs world updated
+updateCars t world =
+  let tlsNotGreen = filter (\tl -> tl.state != GreenTrafficLight) world.tls
+      orderedObjsByCluster = Physics.ObjOrderer.orderedObjClusters world.cars tlsNotGreen
+      updatedObjsByCluster = Dict.map (updateObjCluster t []) orderedObjsByCluster
+      updated = concat updatedObjsByCluster
+      updatedWorld = { world | cars <- updated }
+  in  CarCreator.createCars updatedObjsByCluster updatedWorld
 
 updateAnn world =
   let annFn = Physics.Annihilator.annihilateIfOutOfBounds world.ann
-      annihilated = justs <| map annFn world.objs
-  in  updateWorldObjs world annihilated
+      inBoundsCars = justs <| map annFn world.cars
+  in  { world | cars <- inBoundsCars }
 
 updateTimeQuant: Time -> World -> World
-updateTimeQuant t world = 
-  let w1 = updateObjs t world
-      w2 = updateAnn w1
-  in  Physics.TrafficLights.update t w2
+updateTimeQuant t world = updateCars t . updateAnn . Physics.TrafficLights.update t
 
 timeQuantMs = 100
 

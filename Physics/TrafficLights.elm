@@ -11,10 +11,8 @@ assignGroups world =
   let groupA = world.tlCtrl.groupA
       groupB = world.tlCtrl.groupB
       groupATl = head groupA
-      isRedFromA = \obj -> case obj of
-        TrafficLightObj tl -> tl.tlId == groupATl && tl.state == RedTrafficLight
-        _ -> False
-      groupARed = any isRedFromA world.objs
+      isRedFromA = \tl -> tl.tlId == groupATl && tl.state == RedTrafficLight
+      groupARed = any isRedFromA world.tls
   in  if (groupARed) then (groupA, groupB) else (groupB, groupA)
 
 switchSteps tlCtrl redGroup greenGroup =
@@ -40,11 +38,8 @@ switchToState tlId newTlState world =
   let updateTlFn = \tl -> if tl.tlId == tlId 
                           then { tl | state <- newTlState }
                           else tl
-      updateFn = \obj -> case obj of
-                           TrafficLightObj tl -> TrafficLightObj (updateTlFn tl)
-                           _ -> obj
-      newObjs = map updateFn world.objs
-  in  { world | objs <- newObjs }
+      newTls = map updateTlFn world.tls
+  in  { world | tls <- newTls }
 
 {-- 
 update the world according to the given step and time, and return an updated step

@@ -8,8 +8,6 @@ import Physics
 import Draw
 import SimulationSpeed
 
-import Physics.ObjOrderer
-
 -- WORLD SETUP
 
 data Input = ZoomInInput | ZoomOutInput 
@@ -45,10 +43,10 @@ simulation uiworld =
   let { viewport, world } = uiworld
       { canvas } = viewport
       (w, h) = (round canvas.widthC, round canvas.heightC)
-      sorted = Draw.sortByDrawingOrder world.objs 
-      os = justs . map (Draw.drawObj viewport) <| sorted
+      cars = map (Draw.drawCar viewport) world.cars
+      tls = map (Draw.drawTrafficLight viewport) world.tls
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
-  in  collage w h ([ boundary ] ++ os)
+  in  collage w h ([ boundary ] ++ cars ++ tls)
 
 uiworldInfo uiworld =
   let viewportM = uiworld.viewport.viewportM
@@ -67,14 +65,8 @@ uiworldInfo uiworld =
       speedText = plainText speedString
   in  flow down [ areaPartsText, speedText ]
 
-debugObj uiworld obj =
-  case obj of
-    CarObj car -> asText <| car -- accelForCar uiworld.objs car -- findFirstAhead uiworld.objs car 
-    TrafficLightObj trafficLight -> asText <| trafficLight
-    _ -> asText <| obj
-
 debug uiworld = 
-  let debugs = map (debugObj uiworld) uiworld.world.objs    
+  let x = 0 
   in  flow down ({--debugs ++--} [ asText uiworld.info ])
 
 buttonEmittingInput text input =
@@ -119,7 +111,6 @@ inputSignal = merges (ticker :: tlToggleInput ::
 layout: UIWorld -> Element
 layout uiworld = flow down [ simulation uiworld, 
                              uiworldInfo uiworld, 
-                             -- debug uiworld, 
                              viewportCtrlBtnsLayout,
                              tlToggleEl,
                              simSpeedCtrlsLayout ]
