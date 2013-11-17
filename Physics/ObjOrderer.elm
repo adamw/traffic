@@ -67,7 +67,7 @@ clusterLtFn objs =
       in  \o1 -> \o2 -> 
         let pM1 = posMOfObj o1
             pM2 = posMOfObj o2
-            pMEqual = (pM1.xM == pM2.xM) && (pM1.yM == pM2.yM)
+            pMEqual = (coordEq pM1.xM pM2.xM) && (coordEq pM1.yM pM2.yM)
         in  if (pMEqual) 
             then samePosObjLtFn o1 o2 
             else posMLt (posMOfObj o1, posMOfObj o2)

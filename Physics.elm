@@ -36,10 +36,7 @@ updateAnn world =
   in  updateWorldObjs world annihilated
 
 updateTimeQuant: Time -> World -> World
-updateTimeQuant t world = 
-  let w1 = updateObjs t world
-      w2 = updateAnn w1
-  in  Physics.TrafficLights.update t w2
+updateTimeQuant t = Physics.TrafficLights.update t . updateAnn . updateObjs t
 
 timeQuantMs = 100
 
@@ -54,5 +51,5 @@ update t world =
     else updateTimeQuant t world
 
 switchTrafficLights: World -> World
-switchTrafficLights world = Physics.TrafficLights.startSwitch world 
+switchTrafficLights = Physics.TrafficLights.startSwitch 
 
