@@ -53,8 +53,8 @@ Similarly with TL.
 --}
 samePosObjLtFn o1 o2 =
   case (o1, o2) of
-    (CarCreatorObj cc, _) -> True
-    (TrafficLightObj tl, _) -> True
+    (CarCreator cc, _) -> True
+    (TrafficLight tl, _) -> True
     _ -> False
 
 clusterLtFn: [ Obj ] -> (Obj -> Obj -> Bool)

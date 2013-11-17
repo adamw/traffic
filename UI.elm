@@ -69,8 +69,8 @@ uiworldInfo uiworld =
 
 debugObj uiworld obj =
   case obj of
-    CarObj car -> asText <| car -- accelForCar uiworld.objs car -- findFirstAhead uiworld.objs car 
-    TrafficLightObj trafficLight -> asText <| trafficLight
+    Car car -> asText <| car -- accelForCar uiworld.objs car -- findFirstAhead uiworld.objs car 
+    TrafficLight trafficLight -> asText <| trafficLight
     _ -> asText <| obj
 
 debug uiworld = 

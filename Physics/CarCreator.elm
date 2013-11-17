@@ -17,4 +17,4 @@ nextObjWithinCCPos cc objsAheadWithDist =
 
 createIfVacant: CarCreator -> [ ObjWithDist ] -> Maybe Obj
 createIfVacant cc objsAheadWithDist = 
-  if (nextObjWithinCCPos cc objsAheadWithDist) then Nothing else Just (CarObj (createCar cc))
+  if (nextObjWithinCCPos cc objsAheadWithDist) then Nothing else Just (Car (createCar cc))

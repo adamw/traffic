@@ -12,7 +12,7 @@ assignGroups world =
       groupB = world.tlCtrl.groupB
       groupATl = head groupA
       isRedFromA = \obj -> case obj of
-        TrafficLightObj tl -> tl.tlId == groupATl && tl.state == RedTrafficLight
+        TrafficLight tl -> tl.tlId == groupATl && tl.state == RedTrafficLight
         _ -> False
       groupARed = any isRedFromA world.objs
   in  if (groupARed) then (groupA, groupB) else (groupB, groupA)
@@ -41,7 +41,7 @@ switchToState tlId newTlState world =
                           then { tl | state <- newTlState }
                           else tl
       updateFn = \obj -> case obj of
-                           TrafficLightObj tl -> TrafficLightObj (updateTlFn tl)
+                           TrafficLight tl -> TrafficLight (updateTlFn tl)
                            _ -> obj
       newObjs = map updateFn world.objs
   in  { world | objs <- newObjs }

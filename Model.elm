@@ -34,9 +34,9 @@ type TrafficLightsCtrl = {
   steps: [ TLCtrlStep ]
 }
 
-data Obj = CarObj Car 
-         | TrafficLightObj TrafficLight
-         | CarCreatorObj CarCreator
+data Obj = Car Car 
+         | TrafficLight TrafficLight
+         | CarCreator CarCreator
 
 type ObjWithDist = { obj: Obj, distMToPrev: Float }
 
@@ -47,23 +47,23 @@ type World = { objs: [ Obj ],
 posMOfObj: Obj -> PosM
 posMOfObj obj =
   case obj of
-    CarObj car -> car.posM
-    TrafficLightObj trafficLight -> trafficLight.posM
-    CarCreatorObj carCreator -> carCreator.posM
+    Car car -> car.posM
+    TrafficLight trafficLight -> trafficLight.posM
+    CarCreator carCreator -> carCreator.posM
     _ -> { xM = 0, yM = 0 }
 
 speedKphOfObj: Obj -> Float
 speedKphOfObj obj =
   case obj of
-    CarObj car -> car.speedKph
+    Car car -> car.speedKph
     _ -> 0
 
 directionOfObj: Obj -> Float
 directionOfObj obj =
   case obj of
-    CarObj car -> car.direction
-    TrafficLightObj trafficLight -> trafficLight.direction
-    CarCreatorObj carCreator -> carCreator.direction
+    Car car -> car.direction
+    TrafficLight trafficLight -> trafficLight.direction
+    CarCreator carCreator -> carCreator.direction
     _ -> degrees 0
 
 speedKphToMps: Float -> Float
@@ -80,14 +80,14 @@ distM p1 p2 =
       sqrt ((p1.xM - p2.xM)^2 + (p1.yM - p2.yM)^2)
 
 isTrafficLight: Obj -> Bool
-isTrafficLight obj = case obj of { TrafficLightObj tl -> True ; _ -> False }
+isTrafficLight obj = case obj of { TrafficLight tl -> True ; _ -> False }
 
 clusterIdOfObj: Obj -> Int
 clusterIdOfObj obj = 
   case obj of
-    CarObj car -> car.clusterId
-    TrafficLightObj trafficLight -> trafficLight.clusterId
-    CarCreatorObj carCreator -> carCreator.clusterId
+    Car car -> car.clusterId
+    TrafficLight trafficLight -> trafficLight.clusterId
+    CarCreator carCreator -> carCreator.clusterId
     _ -> -1
 
 -- CONSTANTS

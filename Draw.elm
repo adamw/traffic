@@ -59,8 +59,8 @@ drawTrafficLight ({ viewportM, canvas } as worldViewport) trafficLight =
 drawObj: WorldViewport -> Obj -> Maybe Form
 drawObj worldViewport obj = 
   case obj of
-    CarObj car -> Just (drawCar worldViewport car)
-    TrafficLightObj trafficLight -> Just (drawTrafficLight worldViewport trafficLight)
+    Car car -> Just (drawCar worldViewport car)
+    TrafficLight trafficLight -> Just (drawTrafficLight worldViewport trafficLight)
     _ -> Nothing
 
 sortByDrawingOrder: [ Obj ] -> [ Obj ]

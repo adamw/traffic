@@ -10,8 +10,8 @@ import Physics.ObjOrderer
 updateObj: Time -> [ ObjWithDist ] -> Obj -> [ Obj ]
 updateObj t objsAheadWithDist obj =
   case obj of
-    CarObj car -> [ CarObj (Physics.Car.drive t objsAheadWithDist car) ]
-    CarCreatorObj cc -> cons (Physics.CarCreator.createIfVacant cc objsAheadWithDist) [ obj ]
+    Car car -> [ Car (Physics.Car.drive t objsAheadWithDist car) ]
+    CarCreator cc -> cons (Physics.CarCreator.createIfVacant cc objsAheadWithDist) [ obj ]
     _ -> [ obj ]
 
 updateObjCluster: Time -> [ Obj ] -> [ ObjWithDist ] -> [ Obj ]
