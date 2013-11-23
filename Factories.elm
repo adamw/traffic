@@ -1,7 +1,9 @@
-module Factories where
+module Factories(initialUIWorld) where
 
 import open Model
 import open UIModel
+import Physics
+import Random.Standard
 
 mainCanvas: SizeC
 mainCanvas = { widthC = 1000, heightC = 500 }
@@ -35,23 +37,22 @@ createTrafficLight clusterId tlId tlState xOffset yOffset degs =
 initialWorldViewport: WorldViewport
 initialWorldViewport = { viewportM = initialViewportM, canvas = mainCanvas }
 
-initialUIWorld: UIWorld
-initialUIWorld = 
-  let worldObjs = [ Car (createCar 1 -150), 
-                    Car (createCar 1 -100), 
-                    Car (createCar 1 -50), 
+initialWorld = 
+  let worldObjs = [ --Car (createCar 1 -150), 
+                    --Car (createCar 1 -100), 
+                    --Car (createCar 1 -50), 
                     TrafficLight (createTrafficLight 2 1 RedTrafficLight   -10  -5 0), -- L->R, bottom lane
                     TrafficLight (createTrafficLight 1 2 RedTrafficLight   -10   5 0), -- L->R, top lane
                     TrafficLight (createTrafficLight 3 3 GreenTrafficLight 0    15 270), -- T->B                          
                     TrafficLight (createTrafficLight 4 4 GreenTrafficLight 10  -15 90), -- B->T
-                    CarCreator (createCarCreator 2 -160 -5 0),
-                    CarCreator (createCarCreator 1 -160  5 0),
-                    CarCreator (createCarCreator 3 0   80 270),
-                    CarCreator (createCarCreator 4 10 -80 90) 
+                    CarCreator (createCarCreator 2 -220 -5 0),
+                    CarCreator (createCarCreator 1 -220  5 0),
+                    CarCreator (createCarCreator 3 0   140 270),
+                    CarCreator (createCarCreator 4 10 -140 90) 
                   ]
       world = { objs = worldObjs,
-                ann = { minX = -200, maxX = 200, 
-                        minY = -100, maxY = 100 },
+                ann = { minX = -230, maxX = 200, 
+                        minY = -150, maxY = 150 },
                 tlCtrl = {
                   groupA = [ 1, 2 ],
                   groupB = [ 3, 4 ],
@@ -59,9 +60,14 @@ initialUIWorld =
                   yellowAfterGreen = 3.0 * oneSecond,
                   betweenRed = 1.0 * oneSecond,
                   steps = []
-                } 
+                },
+                random = Random.Standard.generator 42
               }
-  in  { viewport = initialWorldViewport,
-        world = world, 
-        info = "X",
-        timeMultiplier = 1.0 }
+  in  Physics.update (25 * oneSecond) world
+
+initialUIWorld: UIWorld
+initialUIWorld = 
+  { viewport = initialWorldViewport,
+    world = initialWorld, 
+    info = "X",
+    timeMultiplier = 2.0 }

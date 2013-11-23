@@ -7,33 +7,38 @@ import Physics.CarCreator
 import Physics.Annihilator
 import Physics.ObjOrderer
 
-updateObj: Time -> [ ObjWithDist ] -> Obj -> [ Obj ]
-updateObj t objsAheadWithDist obj =
+updateObj: Time -> [ ObjWithDist ] -> RandStdGen -> Obj -> ([ Obj ], RandStdGen)
+updateObj t objsAheadWithDist rand obj =
   case obj of
-    Car car -> [ Car (Physics.Car.drive t objsAheadWithDist car) ]
-    CarCreator cc -> cons (Physics.CarCreator.createIfVacant cc objsAheadWithDist) [ obj ]
-    _ -> [ obj ]
+    Car car -> 
+      let updated = Car (Physics.Car.drive t objsAheadWithDist car)
+      in  ([ updated ], rand)
+    CarCreator cc -> 
+      let (maybeNew, rand') = Physics.CarCreator.createIfVacant cc objsAheadWithDist rand
+      in  (cons maybeNew [ obj ], rand')
+    _ -> ([ obj ], rand)
 
-updateObjCluster: Time -> [ Obj ] -> [ ObjWithDist ] -> [ Obj ]
-updateObjCluster t acc objsWithDist  =
+updateObjCluster: Time -> [ Obj ] -> RandStdGen -> [ ObjWithDist ] -> ([ Obj ], RandStdGen)
+updateObjCluster t acc rand objsWithDist  =
   case objsWithDist of
-    [] -> acc
+    [] -> (acc, rand)
     objWithDist :: tl ->
-      let updated = updateObj t tl objWithDist.obj
-      in  updateObjCluster t (updated ++ acc) tl 
-
-updateWorldObjs world newObjs = { world | objs <- newObjs }
+      let (updated, rand') = updateObj t tl rand objWithDist.obj
+      in  updateObjCluster t (updated ++ acc) rand' tl 
 
 updateObjs t world =
   let orderedObjClusters = Physics.ObjOrderer.orderedObjClusters world.objs
-      updatedClusters = map (updateObjCluster t []) orderedObjClusters
-      updated = concat updatedClusters
-  in  updateWorldObjs world updated
+      (updated, rand') = foldl 
+        (\objCluster -> \(acc, rand) -> updateObjCluster t acc rand objCluster) 
+        ([], world.random) 
+        orderedObjClusters 
+  in  { world | objs <- updated
+              , random <- rand' }
 
 updateAnn world =
   let annFn = Physics.Annihilator.annihilateIfOutOfBounds world.ann
       annihilated = justs <| map annFn world.objs
-  in  updateWorldObjs world annihilated
+  in  { world | objs <- annihilated } 
 
 updateTimeQuant: Time -> World -> World
 updateTimeQuant t = Physics.TrafficLights.update t . updateAnn . updateObjs t

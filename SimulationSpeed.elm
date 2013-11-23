@@ -2,7 +2,7 @@ module SimulationSpeed(speedOfSimulationUp, speedOfSimulationDown, adjustTime) w
 
 import open UIModel
 
-possibleSpeeds = [ 0.5, 1.0, 1.5, 2.0, 4.0, 8.0, 16.0, 32.0 ]
+possibleSpeeds = [ 0.5, 1.0, 2.0, 4.0, 8.0, 16.0 ]
 
 speedOfSimulationUp: UIWorld -> UIWorld
 speedOfSimulationUp uiworld = changeSpeedIdx uiworld (\i -> i + 1)

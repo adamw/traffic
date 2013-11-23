@@ -1,5 +1,8 @@
 module Model where
 
+import Random.Generator
+import Random.Standard
+
 type ClusterId = Int
 
 -- m suffix means meters
@@ -40,9 +43,12 @@ data Obj = Car Car
 
 type ObjWithDist = { obj: Obj, distMToPrev: Float }
 
+type RandStdGen = Random.Generator.Generator Random.Standard.Standard
+
 type World = { objs: [ Obj ], 
                ann: Annihilator,
-               tlCtrl: TrafficLightsCtrl }
+               tlCtrl: TrafficLightsCtrl,
+               random: RandStdGen }
 
 posMOfObj: Obj -> PosM
 posMOfObj obj =
