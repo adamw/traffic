@@ -41,6 +41,8 @@ uiworldStep input uiworld =
 
 -- LAYOUT
 
+background = toForm <| image 1100 550 "background.png"
+
 simulation uiworld = 
   let { viewport, world } = uiworld
       { canvas } = viewport
@@ -48,7 +50,7 @@ simulation uiworld =
       sorted = Draw.sortByDrawingOrder world.objs 
       os = justs . map (Draw.drawObj viewport) <| sorted
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
-  in  collage w h ([ boundary ] ++ os)
+  in  collage w h ([ background, boundary ] ++ os)
 
 uiworldInfo uiworld =
   let viewportM = uiworld.viewport.viewportM

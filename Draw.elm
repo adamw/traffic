@@ -22,11 +22,9 @@ drawCar: WorldViewport -> Car -> Form
 drawCar worldViewport car = 
   let sz  = sizeMToSizeC worldViewport car.sizeM
       pos = posMToPosC worldViewport car.posM
-  in  rect sz.widthC sz.heightC |> outlined (solid red) 
+  in  rect sz.widthC sz.heightC |> outlined (solid lightOrange) 
                                 |> move (pos.xC, pos.yC)
                                 |> rotate car.direction
-
-orange = rgb 255 127 0
 
 trafficLightSizeC: SizeC
 trafficLightSizeC = { widthC = 12, heightC = 24 }
