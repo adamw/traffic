@@ -41,7 +41,8 @@ createCar cc rand =
       base2 = { base1 | speedKph = 0 }      
       base3 = { base2 | direction = cc.direction }
       base4 = { base3 | clusterId = cc.clusterId }
-  in  (base4, rand')
+      base5 = { base4 | happiness = { raw = 0, val = 0, nextUpdate = 0 } }
+  in  (base5, rand')
 
 nextObjWithinCCPos cc objsAheadWithDist = 
   case objsAheadWithDist of

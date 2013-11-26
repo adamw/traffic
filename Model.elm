@@ -15,7 +15,8 @@ type Clustered a = { a | clusterId: ClusterId }
 type Directed a = { a | direction: Float }
 type ObjParams a = Positioned (Clustered (Directed a)) 
 
-type Car = ObjParams { speedKph: Float, sizeM: SizeM, aMss: Float }
+type Happiness = { raw: Int, val: Int, nextUpdate: Float }
+type Car = ObjParams { speedKph: Float, sizeM: SizeM, aMss: Float, happiness: Happiness }
 
 type TLId = Int
 data TLState = RedTrafficLight | YellowTrafficLight | GreenTrafficLight

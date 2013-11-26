@@ -18,7 +18,8 @@ createCar clusterId xOffset = { posM = { xM = xOffset, yM = 5 },
                                 sizeM = { lengthM = 4, widthM = 2 },
                                 direction = degrees 0,
                                 aMss = 4.3,
-                                clusterId = clusterId  }
+                                clusterId = clusterId,
+                                happiness = { raw = 0, val = 0, nextUpdate = 0 } }
 
 createCarCreator: ClusterId -> Float -> Float -> Float -> CarCreator
 createCarCreator clusterId xOffset yOffset degs = { posM = { xM = xOffset, yM = yOffset },

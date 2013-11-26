@@ -7,6 +7,7 @@ import Graphics.Input
 import Physics
 import Draw
 import SimulationSpeed
+import Happiness
 
 import Physics.ObjOrderer
 
@@ -36,8 +37,10 @@ uiworldStep input uiworld =
     SlowDownInput      -> SimulationSpeed.speedOfSimulationDown uiworld
     ToggleTrafficLightsInput -> updateWorld uiworld Physics.switchTrafficLights
     TickInput t        -> 
-      let updateFn = Physics.update (SimulationSpeed.adjustTime uiworld t)
-      in  updateWorld uiworld updateFn
+      let adjustedT = (SimulationSpeed.adjustTime uiworld t)
+          updateFnP = Physics.update adjustedT
+          updateFnH = Happiness.update adjustedT
+      in  updateWorld uiworld (updateFnP . updateFnH)
 
 -- LAYOUT
 
@@ -86,6 +89,9 @@ buttonEmittingInput text input =
 
 (tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic lights" ToggleTrafficLightsInput
 
+happinessInfo: UIWorld -> Element
+happinessInfo uiworld = asText <| Happiness.average uiworld.world
+
 -- VIEWPORT CONTROLS
 
 viewportCtrlBtnsSpecs = [
@@ -124,4 +130,5 @@ layout uiworld = flow down [ simulation uiworld,
                              -- debug uiworld, 
                              viewportCtrlBtnsLayout,
                              tlToggleEl,
-                             simSpeedCtrlsLayout ]
+                             simSpeedCtrlsLayout,
+                             happinessInfo uiworld ]
