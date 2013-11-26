@@ -2,6 +2,7 @@ module Physics.CarCreator(createIfVacant) where
 
 import Random.Generator
 import open Model
+import Happiness
 
 smallCarBase     = { sizeM = { lengthM = 3, widthM = 1.8 },
                      aMss = 4.3 }
@@ -41,7 +42,7 @@ createCar cc rand =
       base2 = { base1 | speedKph = 0 }      
       base3 = { base2 | direction = cc.direction }
       base4 = { base3 | clusterId = cc.clusterId }
-      base5 = { base4 | happiness = { raw = 0, val = 0, nextUpdate = 0 } }
+      base5 = { base4 | happiness = Happiness.initial }
   in  (base5, rand')
 
 nextObjWithinCCPos cc objsAheadWithDist = 

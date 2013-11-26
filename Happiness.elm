@@ -1,11 +1,14 @@
-module Happiness(update, average) where
+module Happiness(update, average, fraction, initial) where
 
 import open Model
 
-minH = -200
-maxH = 100
-borderH = -100
+minH = -100
+maxH = 50
+borderH = -50
 updateEvery = oneSecond
+
+initial: Happiness
+initial = { raw = 25, val = 25, nextUpdate = 0 }
 
 update: Time -> World -> World
 update t world = 
@@ -32,7 +35,7 @@ addToCarHappinessNextUpdate delta car =
 updateHappiness car =
   let v = car.speedKph
       h = car.happiness
-      rawDelta = if | v == 0    -> -2
+      rawDelta = if | v == 0    -> -3
                     | v < 10    ->  1
                     | v < 25    ->  2
                     | otherwise ->  4
@@ -42,17 +45,24 @@ updateHappiness car =
              then h.val + rawDelta
              else clamp minH maxH <| h.raw + rawDelta
       -- val stays at -100, and then jumps to -200 as the driver looses hope
-      val' = if | raw' > borderH  -> raw'
-                | raw' == minH -> raw'
-                | otherwise    -> borderH
+      val' = if | raw' > borderH    -> raw'
+                | raw' == minH      -> raw'
+                | h.val < borderH   -> raw' -- lost hope before
+                | otherwise         -> borderH
       h' = { h | raw <- raw', val <- val' }
   in  { car | happiness <- h' }
 
-average: World -> Float
+average: World -> Int
 average world =
   let 
     sumH o (s, c) = case o of 
       Car car -> (s + car.happiness.val, c + 1)
       _ -> (s, c)
     (totalS, totalC) = foldl sumH (0, 0) world.objs
-  in (toFloat totalS) / (toFloat totalC)
+  in round <| (toFloat totalS) / (toFloat totalC)
+
+fraction: Car -> Float
+fraction car =
+  let span = maxH - minH
+      offset = car.happiness.val - minH
+  in  (toFloat offset) / (toFloat span)

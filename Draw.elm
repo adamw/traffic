@@ -2,6 +2,7 @@ module Draw(drawObj, sortByDrawingOrder) where
 
 import open Model
 import open UIModel
+import Happiness
 
 -- TRANSLATION
 
@@ -22,9 +23,11 @@ drawCar: WorldViewport -> Car -> Form
 drawCar worldViewport car = 
   let sz  = sizeMToSizeC worldViewport car.sizeM
       pos = posMToPosC worldViewport car.posM
-  in  rect sz.widthC sz.heightC |> outlined (solid lightOrange) 
-                                |> move (pos.xC, pos.yC)
-                                |> rotate car.direction
+      clrComponent = round <| (Happiness.fraction car) * 255
+      baseRect = rect sz.widthC sz.heightC
+  in  baseRect |> filled (rgb 128 clrComponent 0)
+               |> move (pos.xC, pos.yC)
+               |> rotate car.direction
 
 trafficLightSizeC: SizeC
 trafficLightSizeC = { widthC = 12, heightC = 24 }

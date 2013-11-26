@@ -90,7 +90,9 @@ buttonEmittingInput text input =
 (tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic lights" ToggleTrafficLightsInput
 
 happinessInfo: UIWorld -> Element
-happinessInfo uiworld = asText <| Happiness.average uiworld.world
+happinessInfo uiworld = 
+  flow right [ plainText "Average happiness: ", 
+               plainText <| show <| Happiness.average uiworld.world ]
 
 -- VIEWPORT CONTROLS
 
