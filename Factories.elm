@@ -71,4 +71,5 @@ initialUIWorld =
   { viewport = initialWorldViewport,
     world = initialWorld, 
     info = "X",
+    tlInfo = tlChangedManuallyInfo,
     timeMultiplier = 2.0 }

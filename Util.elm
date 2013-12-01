@@ -24,3 +24,8 @@ mergeSortMerge lt l1 l2 acc =
       if (lt hd1 hd2) 
         then mergeSortMerge lt tl1 l2 (hd1 :: acc)
         else mergeSortMerge lt l1 tl2 (hd2 :: acc)
+
+getOrElse: a -> Maybe a -> a
+getOrElse def ma = case ma of
+  Just x -> x
+  Nothing -> def

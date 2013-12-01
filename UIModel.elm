@@ -11,6 +11,7 @@ type WorldViewport = { viewportM: ViewportM, canvas: SizeC }
 type UIWorld = { viewport: WorldViewport, 
                  world: World,
                  info: String,
+                 tlInfo: String,
                  timeMultiplier: Float }              
 
 -- WORLD UPDATES
@@ -43,3 +44,18 @@ panViewport xFactor yFactor =
 
 appendToInfo: String -> UIWorld -> UIWorld
 appendToInfo what uiworld = { uiworld | info <- uiworld.info ++ what }
+
+setTlInfo: String -> UIWorld -> UIWorld
+setTlInfo what uiworld = { uiworld | tlInfo <- what }
+
+tlChangedManuallyInfo: String
+tlChangedManuallyInfo = "Traffic ligths are changed manually."
+
+tlChangedAutomaticallyInfo: Int -> Int -> String
+tlChangedAutomaticallyInfo lr td = concat [
+    "Traffic lights are changed automatically: left-right every ",
+    show lr, 
+    " seconds, top-down every ",
+    show td,
+    " seconds"
+  ]

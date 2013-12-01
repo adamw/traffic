@@ -1,13 +1,15 @@
-module UI(layout, uiworldStep, inputSignal) where
+module UI(uiworldStep, inputSignal, layoutSignal) where
 
 import open Model
 import open UIModel
+import open Util
 
 import Graphics.Input
 import Physics
 import Draw
 import SimulationSpeed
 import Happiness
+import String
 
 import Physics.ObjOrderer
 
@@ -15,11 +17,11 @@ import Physics.ObjOrderer
 
 data Input = ZoomInInput | ZoomOutInput 
   | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
-  | ToggleTrafficLightsInput
+  | ManualToggleTrafficLightsInput | AutoToggleTrafficLightsInput Int Int 
   | SpeedUpInput | SlowDownInput
   | TickInput Time
 
-updateWorld uiworld updateFn =
+updateWorld updateFn uiworld  =
   let world = uiworld.world
       newWorld = updateFn world
   in  { uiworld | world <- newWorld } 
@@ -35,16 +37,22 @@ uiworldStep input uiworld =
     PanDownInput       -> panViewport 0 -0.5 . appendToInfo "D" <| uiworld
     SpeedUpInput       -> SimulationSpeed.speedOfSimulationUp uiworld
     SlowDownInput      -> SimulationSpeed.speedOfSimulationDown uiworld
-    ToggleTrafficLightsInput -> updateWorld uiworld Physics.switchTrafficLights
+    ManualToggleTrafficLightsInput -> 
+      setTlInfo tlChangedManuallyInfo . updateWorld Physics.switchTrafficLights <| uiworld
+    AutoToggleTrafficLightsInput lr td -> 
+      setTlInfo (tlChangedAutomaticallyInfo lr td) . id <| uiworld
     TickInput t        -> 
       let adjustedT = (SimulationSpeed.adjustTime uiworld t)
           updateFnP = Physics.update adjustedT
           updateFnH = Happiness.update adjustedT
-      in  updateWorld uiworld (updateFnP . updateFnH)
+      in  updateWorld (updateFnP . updateFnH) uiworld 
 
 -- LAYOUT
 
 background = toForm <| image 1100 550 "background.png"
+
+elHeight = 40
+col1ElWidth = 130+50+130+50
 
 simulation uiworld = 
   let { viewport, world } = uiworld
@@ -87,12 +95,43 @@ buttonEmittingInput text input =
       btnInput = sampleOn btnSignal (constant input)
   in  (btnEl, btnInput) 
 
-(tlToggleEl, tlToggleInput) = buttonEmittingInput "Change traffic lights" ToggleTrafficLightsInput
+-- TRAFFIC LIGHTS
+
+(tlToggleElSig, tlAutoToggleInput, tlManualToggleInput) = 
+  let -- interface elements
+      (lrIntFieldSig, lrIntValStr) = Graphics.Input.field "1"
+      (tdIntFieldSig, tdIntValStr) = Graphics.Input.field "1"
+      -- the signal value will be ignored, just the presence of the signal is important
+      (autoToggleBtn, autoToggleRawInput) = 
+        buttonEmittingInput "Change traffic lights automatically"  True   
+      -- manual
+      (manualToggleBtn, manualToggleInput) = buttonEmittingInput 
+        "Change traffic lights manually" ManualToggleTrafficLightsInput   
+      -- we don't want field changes to trigger the main signal; we only need to get
+      -- the current value
+      toIntOr1 = (getOrElse 1) . String.toInt
+      lrIntVal = sampleOn autoToggleRawInput <| toIntOr1 <~ lrIntValStr
+      tdIntVal = sampleOn autoToggleRawInput <| toIntOr1 <~ tdIntValStr
+      autoToggleInput =  
+        (\t -> \lr -> \td -> AutoToggleTrafficLightsInput lr td) <~
+        autoToggleRawInput ~ lrIntVal ~ tdIntVal
+      -- layout
+      autoToggleEl lrIntEl tdIntEl = flow right [ 
+        container 130 elHeight midLeft <| plainText "Left-right interval: ",
+        size 50 elHeight <| lrIntEl,
+        container 130 elHeight midLeft <| plainText "Top-down interval: ",
+        size 50 elHeight <| tdIntEl,
+        size 150 elHeight autoToggleBtn,
+        size 150 elHeight manualToggleBtn ]
+      autoToggleElSig = autoToggleEl <~ lrIntFieldSig ~ tdIntFieldSig
+  in  (autoToggleElSig, autoToggleInput, manualToggleInput)
+
+-- HAPPINESS
 
 happinessInfo: UIWorld -> Element
 happinessInfo uiworld = 
-  flow right [ plainText "Average happiness: ", 
-               plainText <| show <| Happiness.average uiworld.world ]
+  let str = "Average happiness: " ++ (show <| Happiness.average uiworld.world) ++ "."
+  in  container col1ElWidth elHeight midLeft <| plainText str
 
 -- VIEWPORT CONTROLS
 
@@ -115,22 +154,33 @@ viewportCtrlBtnsSpecs = [
 (speedUpEl, speedUpInput) = buttonEmittingInput "Speed up" SpeedUpInput
 (slowDownEl, slowDownInput) = buttonEmittingInput "Slow down" SlowDownInput
 
-simSpeedCtrlsLayout = flow right [ speedUpEl, slowDownEl ] 
+simSpeedLayout uiworld = 
+  let speedString = " Current simulation speed: " ++ (show uiworld.timeMultiplier) ++ "x"
+  in  flow right [
+        container col1ElWidth elHeight midLeft <| plainText speedString, 
+        size 150 elHeight speedUpEl, 
+        size 150 elHeight slowDownEl
+      ] 
 
 -- WIRE
 
 ticker = TickInput <~ fps 25
 
 inputSignal: Signal Input
-inputSignal = merges (ticker :: tlToggleInput :: 
+inputSignal = merges (ticker :: 
+  tlManualToggleInput :: tlAutoToggleInput ::
   speedUpInput :: slowDownInput ::
   viewportCtrlBtnsSignals)
 
-layout: UIWorld -> Element
-layout uiworld = flow down [ simulation uiworld, 
-                             -- uiworldInfo uiworld, 
-                             -- debug uiworld, 
-                             -- viewportCtrlBtnsLayout,
-                             tlToggleEl,
-                             simSpeedCtrlsLayout,
-                             happinessInfo uiworld ]
+layoutSignal: Signal (UIWorld -> Element)
+layoutSignal = 
+  let layoutFn tlToggleEl uiworld = 
+    flow down [ simulation uiworld, 
+                -- uiworldInfo uiworld, 
+                -- debug uiworld, 
+                -- viewportCtrlBtnsLayout,
+                happinessInfo uiworld,
+                container col1ElWidth elHeight midLeft <| plainText uiworld.tlInfo, 
+                tlToggleEl,
+                simSpeedLayout uiworld ]
+  in  layoutFn <~ tlToggleElSig
