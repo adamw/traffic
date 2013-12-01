@@ -17,7 +17,7 @@ import Physics.ObjOrderer
 
 data Input = ZoomInInput | ZoomOutInput 
   | PanLeftInput | PanRightInput | PanUpInput | PanDownInput
-  | ManualToggleTrafficLightsInput | AutoToggleTrafficLightsInput Int Int 
+  | ManualSwitchTrafficLightsInput | AutoSwitchTrafficLightsInput TLAutoInt 
   | SpeedUpInput | SlowDownInput
   | TickInput Time
 
@@ -37,10 +37,12 @@ uiworldStep input uiworld =
     PanDownInput       -> panViewport 0 -0.5 . appendToInfo "D" <| uiworld
     SpeedUpInput       -> SimulationSpeed.speedOfSimulationUp uiworld
     SlowDownInput      -> SimulationSpeed.speedOfSimulationDown uiworld
-    ManualToggleTrafficLightsInput -> 
-      setTlInfo tlChangedManuallyInfo . updateWorld Physics.switchTrafficLights <| uiworld
-    AutoToggleTrafficLightsInput lr td -> 
-      setTlInfo (tlChangedAutomaticallyInfo lr td) . id <| uiworld
+    ManualSwitchTrafficLightsInput -> 
+      setTlInfo tlChangedManuallyInfo . 
+        updateWorld Physics.manualTrafficLightsSwitch <| uiworld
+    AutoSwitchTrafficLightsInput int -> 
+      setTlInfo (tlChangedAutomaticallyInfo int) . 
+        updateWorld (Physics.startAutoTrafficLightsSwitch int) <| uiworld
     TickInput t        -> 
       let adjustedT = (SimulationSpeed.adjustTime uiworld t)
           updateFnP = Physics.update adjustedT
@@ -97,34 +99,34 @@ buttonEmittingInput text input =
 
 -- TRAFFIC LIGHTS
 
-(tlToggleElSig, tlAutoToggleInput, tlManualToggleInput) = 
+(tlSwitchElSig, tlAutoSwitchInput, tlManualSwitchInput) = 
   let -- interface elements
       (lrIntFieldSig, lrIntValStr) = Graphics.Input.field "1"
       (tdIntFieldSig, tdIntValStr) = Graphics.Input.field "1"
       -- the signal value will be ignored, just the presence of the signal is important
-      (autoToggleBtn, autoToggleRawInput) = 
+      (autoSwitchBtn, autoSwitchRawInput) = 
         buttonEmittingInput "Change traffic lights automatically"  True   
       -- manual
-      (manualToggleBtn, manualToggleInput) = buttonEmittingInput 
-        "Change traffic lights manually" ManualToggleTrafficLightsInput   
+      (manualSwitchBtn, manualSwitchInput) = buttonEmittingInput 
+        "Change traffic lights manually" ManualSwitchTrafficLightsInput   
       -- we don't want field changes to trigger the main signal; we only need to get
       -- the current value
       toIntOr1 = (getOrElse 1) . String.toInt
-      lrIntVal = sampleOn autoToggleRawInput <| toIntOr1 <~ lrIntValStr
-      tdIntVal = sampleOn autoToggleRawInput <| toIntOr1 <~ tdIntValStr
-      autoToggleInput =  
-        (\t -> \lr -> \td -> AutoToggleTrafficLightsInput lr td) <~
-        autoToggleRawInput ~ lrIntVal ~ tdIntVal
+      lrIntVal = sampleOn autoSwitchRawInput <| toIntOr1 <~ lrIntValStr
+      tdIntVal = sampleOn autoSwitchRawInput <| toIntOr1 <~ tdIntValStr
+      autoSwitchInput =  
+        (\t -> \lr -> \td -> AutoSwitchTrafficLightsInput <| TLAutoInt lr td) <~
+        autoSwitchRawInput ~ lrIntVal ~ tdIntVal
       -- layout
-      autoToggleEl lrIntEl tdIntEl = flow right [ 
+      autoSwitchEl lrIntEl tdIntEl = flow right [ 
         container 130 elHeight midLeft <| plainText "Left-right interval: ",
         size 50 elHeight <| lrIntEl,
         container 130 elHeight midLeft <| plainText "Top-down interval: ",
         size 50 elHeight <| tdIntEl,
-        size 150 elHeight autoToggleBtn,
-        size 150 elHeight manualToggleBtn ]
-      autoToggleElSig = autoToggleEl <~ lrIntFieldSig ~ tdIntFieldSig
-  in  (autoToggleElSig, autoToggleInput, manualToggleInput)
+        size 150 elHeight autoSwitchBtn,
+        size 150 elHeight manualSwitchBtn ]
+      autoSwitchElSig = autoSwitchEl <~ lrIntFieldSig ~ tdIntFieldSig
+  in  (autoSwitchElSig, autoSwitchInput, manualSwitchInput)
 
 -- HAPPINESS
 
@@ -168,19 +170,19 @@ ticker = TickInput <~ fps 25
 
 inputSignal: Signal Input
 inputSignal = merges (ticker :: 
-  tlManualToggleInput :: tlAutoToggleInput ::
+  tlManualSwitchInput :: tlAutoSwitchInput ::
   speedUpInput :: slowDownInput ::
   viewportCtrlBtnsSignals)
 
 layoutSignal: Signal (UIWorld -> Element)
 layoutSignal = 
-  let layoutFn tlToggleEl uiworld = 
+  let layoutFn tlSwitchEl uiworld = 
     flow down [ simulation uiworld, 
                 -- uiworldInfo uiworld, 
                 -- debug uiworld, 
                 -- viewportCtrlBtnsLayout,
                 happinessInfo uiworld,
-                container col1ElWidth elHeight midLeft <| plainText uiworld.tlInfo, 
-                tlToggleEl,
+                container (col1ElWidth*2) elHeight midLeft <| plainText uiworld.tlInfo, 
+                tlSwitchEl,
                 simSpeedLayout uiworld ]
-  in  layoutFn <~ tlToggleElSig
+  in  layoutFn <~ tlSwitchElSig

@@ -55,12 +55,13 @@ initialWorld =
                 ann = { minX = -230, maxX = 200, 
                         minY = -150, maxY = 150 },
                 tlCtrl = {
-                  groupA = [ 1, 2 ],
-                  groupB = [ 3, 4 ],
+                  groupLR = [ 1, 2 ],
+                  groupTD = [ 3, 4 ],
                   yellowAfterRed = 1.0 * oneSecond, 
                   yellowAfterGreen = 3.0 * oneSecond,
                   betweenRed = 1.0 * oneSecond,
-                  steps = []
+                  steps = [],
+                  renewSteps = Nothing
                 },
                 random = Random.Standard.generator 42
               }

@@ -51,11 +51,11 @@ setTlInfo what uiworld = { uiworld | tlInfo <- what }
 tlChangedManuallyInfo: String
 tlChangedManuallyInfo = "Traffic ligths are changed manually."
 
-tlChangedAutomaticallyInfo: Int -> Int -> String
-tlChangedAutomaticallyInfo lr td = concat [
+tlChangedAutomaticallyInfo: TLAutoInt -> String
+tlChangedAutomaticallyInfo int = concat [
     "Traffic lights are changed automatically: left-right every ",
-    show lr, 
+    show int.lr, 
     " seconds, top-down every ",
-    show td,
+    show int.td,
     " seconds"
   ]

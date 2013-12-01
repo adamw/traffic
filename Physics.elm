@@ -1,4 +1,4 @@
-module Physics(update, switchTrafficLights) where 
+module Physics(update, manualTrafficLightsSwitch, startAutoTrafficLightsSwitch) where 
 
 import open Model
 import Physics.Car
@@ -55,6 +55,8 @@ update t world =
     then update (t-timeQuantMs) (updateTimeQuant timeQuantMs world) 
     else updateTimeQuant t world
 
-switchTrafficLights: World -> World
-switchTrafficLights = Physics.TrafficLights.startSwitch 
+manualTrafficLightsSwitch: World -> World
+manualTrafficLightsSwitch = Physics.TrafficLights.manualSwitch 
 
+startAutoTrafficLightsSwitch: TLAutoInt -> World -> World
+startAutoTrafficLightsSwitch = Physics.TrafficLights.autoSwitch

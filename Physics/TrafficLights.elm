@@ -1,4 +1,4 @@
-module Physics.TrafficLights(update, startSwitch) where
+module Physics.TrafficLights(update, manualSwitch, autoSwitch) where
 
 import open Model
 
@@ -7,15 +7,20 @@ updateSteps newSteps world =
       newTlCtrl = { tlCtrl | steps <- newSteps }
   in  { world | tlCtrl <- newTlCtrl }
 
+updateTlCtrl updateFn world = 
+  let tlCtrl = world.tlCtrl
+      tlCtrl' = updateFn tlCtrl
+  in  { world | tlCtrl <- tlCtrl'  }
+
 assignGroups world =
-  let groupA = world.tlCtrl.groupA
-      groupB = world.tlCtrl.groupB
-      groupATl = head groupA
-      isRedFromA = \obj -> case obj of
-        TrafficLight tl -> tl.tlId == groupATl && tl.state == RedTrafficLight
+  let groupLR = world.tlCtrl.groupLR
+      groupTD = world.tlCtrl.groupTD
+      groupLRTl = head groupLR
+      isRedFromLR = \obj -> case obj of
+        TrafficLight tl -> tl.tlId == groupLRTl && tl.state == RedTrafficLight
         _ -> False
-      groupARed = any isRedFromA world.objs
-  in  if (groupARed) then (groupA, groupB) else (groupB, groupA)
+      groupLRRed = any isRedFromLR world.objs
+  in  if (groupLRRed) then (groupLR, groupTD) else (groupTD, groupLR)
 
 switchSteps tlCtrl redGroup greenGroup =
   concat [
@@ -28,13 +33,29 @@ switchSteps tlCtrl redGroup greenGroup =
     map (SwitchStep GreenTrafficLight) redGroup
   ]
 
-startSwitch: World -> World
-startSwitch world =
-  if isEmpty world.tlCtrl.steps
+{--
+We can switch TL controls if there are no steps or the only step left
+is wait (which is the last step of automatic TL control)
+--}
+canSwitch steps =
+  case steps of
+    [] -> True
+    [ WaitStep x ] -> True
+    _ -> False
+
+removeRenewSteps = updateTlCtrl <| \tlCtrl -> { tlCtrl | renewSteps <- Nothing }
+
+manualSwitch: World -> World
+manualSwitch = removeRenewSteps . \world ->
+  if canSwitch world.tlCtrl.steps
   then let (redGroup, greenGroup) = assignGroups world
            steps = switchSteps world.tlCtrl redGroup greenGroup
-       in  updateSteps steps world
-  else world -- a switch is alread in progress
+       in  updateSteps (world.tlCtrl.steps ++ steps) world
+  else world -- a switch is in progress
+
+autoSwitch: TLAutoInt -> World -> World
+autoSwitch int = updateTlCtrl <| \tlCtrl ->
+  { tlCtrl | steps <- tlCtrl.steps ++ [ SetAutoInt int ] }
 
 switchToState tlId newTlState world = 
   let updateTlFn = \tl -> if tl.tlId == tlId 
@@ -46,9 +67,23 @@ switchToState tlId newTlState world =
       newObjs = map updateFn world.objs
   in  { world | objs <- newObjs }
 
+setAutoInt int world =
+  let (redGroup, greenGroup) = assignGroups world
+      isLRGreen = greenGroup == world.tlCtrl.groupLR
+      (intAfterRedGroup, intAfterGreenGroup) = if isLRGreen 
+        then (int.td, int.lr) 
+        else (int.lr, int.td) 
+      renewSteps = concat [
+        switchSteps world.tlCtrl redGroup greenGroup,
+        [ WaitStep (toFloat intAfterRedGroup*oneSecond) ],
+        switchSteps world.tlCtrl greenGroup redGroup,
+        [ WaitStep (toFloat intAfterGreenGroup*oneSecond) ]
+      ]
+  in  updateTlCtrl (\tlCtrl -> { tlCtrl | renewSteps <- Just renewSteps }) world
+
 {-- 
 update the world according to the given step and time, and return an updated step
-(if any), and remiaining time
+(if any), and remaining time
 --}
 updateWithStep: Time -> TLCtrlStep -> World -> (World, Maybe TLCtrlStep, Time)
 updateWithStep t step world =
@@ -56,12 +91,17 @@ updateWithStep t step world =
     SwitchStep tlState tlId -> 
       (switchToState tlId tlState world, Nothing, t)
     WaitStep wt ->
-      if wt > t then (world, Just (WaitStep (wt - t)), 0) else (world, Nothing, t - wt)   
+      if wt > t then (world, Just (WaitStep (wt - t)), 0) else (world, Nothing, t - wt) 
+    SetAutoInt int ->  
+      (setAutoInt int world, Nothing, t)
 
 update: Time -> World -> World 
 update t world =
   case world.tlCtrl.steps of
-    [] -> world
+    [] -> 
+      case world.tlCtrl.renewSteps of
+        Nothing -> world
+        Just steps -> update t <| updateSteps steps world
     step :: other -> 
       let (updatedWorld, updatedStep, updatedT) = updateWithStep t step world
           newSteps = cons updatedStep other
