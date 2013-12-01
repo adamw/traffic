@@ -128,9 +128,9 @@ inputSignal = merges (ticker :: tlToggleInput ::
 
 layout: UIWorld -> Element
 layout uiworld = flow down [ simulation uiworld, 
-                             uiworldInfo uiworld, 
+                             -- uiworldInfo uiworld, 
                              -- debug uiworld, 
-                             viewportCtrlBtnsLayout,
+                             -- viewportCtrlBtnsLayout,
                              tlToggleEl,
                              simSpeedCtrlsLayout,
                              happinessInfo uiworld ]

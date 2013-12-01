@@ -72,7 +72,7 @@ accelForCarGivenAhead car objAheadParams =
            else if ddM > dsaM 
                    -- we are further away then the speed adjust distance - can accel
                    then car.aMss
-                   -- adjsuting speed
+                   -- adjusting speed
                    else computeDecel dvKph ddM
 
 minSeparationFromM obj = case obj of

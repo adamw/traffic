@@ -46,10 +46,10 @@ initialWorld =
                     TrafficLight (createTrafficLight 1 2 RedTrafficLight   -10   5 0), -- L->R, top lane
                     TrafficLight (createTrafficLight 3 3 GreenTrafficLight 0    15 270), -- T->B                          
                     TrafficLight (createTrafficLight 4 4 GreenTrafficLight 10  -15 90), -- B->T
-                    CarCreator (createCarCreator 2 -220 -5 0),
-                    CarCreator (createCarCreator 1 -220  5 0),
-                    CarCreator (createCarCreator 3 0   140 270),
-                    CarCreator (createCarCreator 4 10 -140 90) 
+                    CarCreator (createCarCreator 2 -170 -5 0),
+                    CarCreator (createCarCreator 1 -170  5 0),
+                    CarCreator (createCarCreator 3 0    90 270),
+                    CarCreator (createCarCreator 4 10  -90 90) 
                   ]
       world = { objs = worldObjs,
                 ann = { minX = -230, maxX = 200, 
