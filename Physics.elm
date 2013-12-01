@@ -56,7 +56,7 @@ update t world =
     else updateTimeQuant t world
 
 manualTrafficLightsSwitch: World -> World
-manualTrafficLightsSwitch = Physics.TrafficLights.manualSwitch 
+manualTrafficLightsSwitch = Physics.TrafficLights.enqueueManualSwitch 
 
 startAutoTrafficLightsSwitch: TLAutoInt -> World -> World
-startAutoTrafficLightsSwitch = Physics.TrafficLights.autoSwitch
+startAutoTrafficLightsSwitch = Physics.TrafficLights.enqueueAutoSwitch

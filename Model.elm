@@ -29,7 +29,8 @@ type Annihilator = { minX: Float, maxX: Float, minY: Float, maxY: Float }
 
 data TLCtrlStep = SwitchStep TLState TLId
                 | WaitStep Time
-                | SetAutoInt TLAutoInt
+                | SetAutoSwitch TLAutoInt
+                | ManualSwitch
 type TLAutoInt = { lr: Int, td: Int }
 type TrafficLightsCtrl = {
   groupLR: [ TLId ],
@@ -38,7 +39,7 @@ type TrafficLightsCtrl = {
   yellowAfterGreen: Float,
   betweenRed: Float,
   steps: [ TLCtrlStep ],
-  renewSteps: Maybe [ TLCtrlStep ] 
+  autoSwitch: Maybe (TLAutoInt, [ TLCtrlStep ]) 
 }
 
 data Obj = Car Car 

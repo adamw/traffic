@@ -61,7 +61,7 @@ initialWorld =
                   yellowAfterGreen = 3.0 * oneSecond,
                   betweenRed = 1.0 * oneSecond,
                   steps = [],
-                  renewSteps = Nothing
+                  autoSwitch = Nothing
                 },
                 random = Random.Standard.generator 42
               }
@@ -72,5 +72,4 @@ initialUIWorld =
   { viewport = initialWorldViewport,
     world = initialWorld, 
     info = "X",
-    tlInfo = tlChangedManuallyInfo,
     timeMultiplier = 2.0 }

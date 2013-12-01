@@ -38,11 +38,9 @@ uiworldStep input uiworld =
     SpeedUpInput       -> SimulationSpeed.speedOfSimulationUp uiworld
     SlowDownInput      -> SimulationSpeed.speedOfSimulationDown uiworld
     ManualSwitchTrafficLightsInput -> 
-      setTlInfo tlChangedManuallyInfo . 
-        updateWorld Physics.manualTrafficLightsSwitch <| uiworld
+      updateWorld Physics.manualTrafficLightsSwitch uiworld
     AutoSwitchTrafficLightsInput int -> 
-      setTlInfo (tlChangedAutomaticallyInfo int) . 
-        updateWorld (Physics.startAutoTrafficLightsSwitch int) <| uiworld
+      updateWorld (Physics.startAutoTrafficLightsSwitch int) uiworld
     TickInput t        -> 
       let adjustedT = (SimulationSpeed.adjustTime uiworld t)
           updateFnP = Physics.update adjustedT
@@ -97,6 +95,8 @@ buttonEmittingInput text input =
       btnInput = sampleOn btnSignal (constant input)
   in  (btnEl, btnInput) 
 
+midLeftText w h txt = container w h midLeft <| width w <| plainText txt
+
 -- TRAFFIC LIGHTS
 
 (tlSwitchElSig, tlAutoSwitchInput, tlManualSwitchInput) = 
@@ -128,12 +128,24 @@ buttonEmittingInput text input =
       autoSwitchElSig = autoSwitchEl <~ lrIntFieldSig ~ tdIntFieldSig
   in  (autoSwitchElSig, autoSwitchInput, manualSwitchInput)
 
+tlInfo uiworld = 
+  let str = case uiworld.world.tlCtrl.autoSwitch of 
+        Nothing -> "Traffic ligths are changed manually."
+        Just (int, _) -> concat [
+          "Traffic lights are changed automatically: left-right every ",
+          show int.lr, 
+          " seconds, top-down every ",
+          show int.td,
+          " seconds"
+        ]
+  in  midLeftText (col1ElWidth*2) elHeight str
+
 -- HAPPINESS
 
 happinessInfo: UIWorld -> Element
 happinessInfo uiworld = 
   let str = "Average happiness: " ++ (show <| Happiness.average uiworld.world) ++ "."
-  in  container col1ElWidth elHeight midLeft <| plainText str
+  in  midLeftText (col1ElWidth*2) elHeight str
 
 -- VIEWPORT CONTROLS
 
@@ -182,7 +194,7 @@ layoutSignal =
                 -- debug uiworld, 
                 -- viewportCtrlBtnsLayout,
                 happinessInfo uiworld,
-                container (col1ElWidth*2) elHeight midLeft <| plainText uiworld.tlInfo, 
+                tlInfo uiworld, 
                 tlSwitchEl,
                 simSpeedLayout uiworld ]
   in  layoutFn <~ tlSwitchElSig

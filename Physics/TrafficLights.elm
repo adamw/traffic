@@ -1,16 +1,13 @@
-module Physics.TrafficLights(update, manualSwitch, autoSwitch) where
+module Physics.TrafficLights(update, enqueueManualSwitch, enqueueAutoSwitch) where
 
 import open Model
-
-updateSteps newSteps world =
-  let tlCtrl = world.tlCtrl
-      newTlCtrl = { tlCtrl | steps <- newSteps }
-  in  { world | tlCtrl <- newTlCtrl }
 
 updateTlCtrl updateFn world = 
   let tlCtrl = world.tlCtrl
       tlCtrl' = updateFn tlCtrl
   in  { world | tlCtrl <- tlCtrl'  }
+
+updateSteps newSteps = updateTlCtrl (\tlCtrl -> { tlCtrl | steps <- newSteps })
 
 assignGroups world =
   let groupLR = world.tlCtrl.groupLR
@@ -33,29 +30,13 @@ switchSteps tlCtrl redGroup greenGroup =
     map (SwitchStep GreenTrafficLight) redGroup
   ]
 
-{--
-We can switch TL controls if there are no steps or the only step left
-is wait (which is the last step of automatic TL control)
---}
-canSwitch steps =
-  case steps of
-    [] -> True
-    [ WaitStep x ] -> True
-    _ -> False
+enqueueManualSwitch: World -> World
+enqueueManualSwitch = updateTlCtrl <| \tlCtrl ->
+  { tlCtrl | steps <- tlCtrl.steps ++ [ ManualSwitch ] }
 
-removeRenewSteps = updateTlCtrl <| \tlCtrl -> { tlCtrl | renewSteps <- Nothing }
-
-manualSwitch: World -> World
-manualSwitch = removeRenewSteps . \world ->
-  if canSwitch world.tlCtrl.steps
-  then let (redGroup, greenGroup) = assignGroups world
-           steps = switchSteps world.tlCtrl redGroup greenGroup
-       in  updateSteps (world.tlCtrl.steps ++ steps) world
-  else world -- a switch is in progress
-
-autoSwitch: TLAutoInt -> World -> World
-autoSwitch int = updateTlCtrl <| \tlCtrl ->
-  { tlCtrl | steps <- tlCtrl.steps ++ [ SetAutoInt int ] }
+enqueueAutoSwitch: TLAutoInt -> World -> World
+enqueueAutoSwitch int = updateTlCtrl <| \tlCtrl ->
+  { tlCtrl | steps <- tlCtrl.steps ++ [ SetAutoSwitch int ] }
 
 switchToState tlId newTlState world = 
   let updateTlFn = \tl -> if tl.tlId == tlId 
@@ -67,7 +48,7 @@ switchToState tlId newTlState world =
       newObjs = map updateFn world.objs
   in  { world | objs <- newObjs }
 
-setAutoInt int world =
+setAutoSwitch int world =
   let (redGroup, greenGroup) = assignGroups world
       isLRGreen = greenGroup == world.tlCtrl.groupLR
       (intAfterRedGroup, intAfterGreenGroup) = if isLRGreen 
@@ -79,32 +60,42 @@ setAutoInt int world =
         switchSteps world.tlCtrl greenGroup redGroup,
         [ WaitStep (toFloat intAfterGreenGroup*oneSecond) ]
       ]
-  in  updateTlCtrl (\tlCtrl -> { tlCtrl | renewSteps <- Just renewSteps }) world
+  in  updateTlCtrl (\tlCtrl -> { tlCtrl | autoSwitch <- Just (int, renewSteps) }) world
+
+removeRenewSteps = updateTlCtrl <| \tlCtrl -> { tlCtrl | autoSwitch <- Nothing }
+
+manualSwitchSteps world = 
+  if length world.tlCtrl.steps <= 1 -- the current step is on the list still
+  then let (redGroup, greenGroup) = assignGroups world
+       in   switchSteps world.tlCtrl redGroup greenGroup
+  else [] -- more steps enqueued later
 
 {-- 
 update the world according to the given step and time, and return an updated step
 (if any), and remaining time
 --}
-updateWithStep: Time -> TLCtrlStep -> World -> (World, Maybe TLCtrlStep, Time)
+updateWithStep: Time -> TLCtrlStep -> World -> (World, Maybe TLCtrlStep, [ TLCtrlStep ], Time)
 updateWithStep t step world =
   case step of
     SwitchStep tlState tlId -> 
-      (switchToState tlId tlState world, Nothing, t)
+      (switchToState tlId tlState world, Nothing, [], t)
     WaitStep wt ->
-      if wt > t then (world, Just (WaitStep (wt - t)), 0) else (world, Nothing, t - wt) 
-    SetAutoInt int ->  
-      (setAutoInt int world, Nothing, t)
+      if wt > t then (world, Just (WaitStep (wt - t)), [], 0) else (world, Nothing, [], t - wt) 
+    SetAutoSwitch int ->  
+      (setAutoSwitch int world, Nothing, [], t)
+    ManualSwitch ->  
+      (removeRenewSteps world, Nothing, manualSwitchSteps world, t)
 
 update: Time -> World -> World 
 update t world =
   case world.tlCtrl.steps of
     [] -> 
-      case world.tlCtrl.renewSteps of
+      case world.tlCtrl.autoSwitch of
         Nothing -> world
-        Just steps -> update t <| updateSteps steps world
+        Just (_, steps) -> update t <| updateSteps steps world
     step :: other -> 
-      let (updatedWorld, updatedStep, updatedT) = updateWithStep t step world
-          newSteps = cons updatedStep other
+      let (updatedWorld, updatedStep, appendSteps, updatedT) = updateWithStep t step world
+          newSteps = (cons updatedStep other) ++ appendSteps
           newWorld = updateSteps newSteps updatedWorld
           shouldContinue = isNothing updatedStep
       in  if shouldContinue 
