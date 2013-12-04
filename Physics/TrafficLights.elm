@@ -30,13 +30,14 @@ switchSteps tlCtrl redGroup greenGroup =
     map (SwitchStep GreenTrafficLight) redGroup
   ]
 
+enqueueStep step = updateTlCtrl <| \tlCtrl ->
+  { tlCtrl | steps <- tlCtrl.steps ++ [ step ] }
+
 enqueueManualSwitch: World -> World
-enqueueManualSwitch = updateTlCtrl <| \tlCtrl ->
-  { tlCtrl | steps <- tlCtrl.steps ++ [ ManualSwitch ] }
+enqueueManualSwitch = enqueueStep ManualSwitch
 
 enqueueAutoSwitch: TLAutoInt -> World -> World
-enqueueAutoSwitch int = updateTlCtrl <| \tlCtrl ->
-  { tlCtrl | steps <- tlCtrl.steps ++ [ SetAutoSwitch int ] }
+enqueueAutoSwitch int = enqueueStep <| SetAutoSwitch int
 
 switchToState tlId newTlState world = 
   let updateTlFn = \tl -> if tl.tlId == tlId 
@@ -72,7 +73,7 @@ manualSwitchSteps world =
 
 {-- 
 update the world according to the given step and time, and return an updated step
-(if any), and remaining time
+(if any), and remaining time. Shouldn't modify steps, as they are overwritten later.
 --}
 updateWithStep: Time -> TLCtrlStep -> World -> (World, Maybe TLCtrlStep, [ TLCtrlStep ], Time)
 updateWithStep t step world =

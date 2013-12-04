@@ -8,10 +8,10 @@ import Graphics.Input
 import Physics
 import Draw
 import SimulationSpeed
-import Happiness
-import String
-
 import Physics.ObjOrderer
+import Happiness
+import Marketing
+import String
 
 -- WORLD SETUP
 
@@ -61,7 +61,8 @@ simulation uiworld =
       sorted = Draw.sortByDrawingOrder world.objs 
       os = justs . map (Draw.drawObj viewport) <| sorted
       boundary = rect canvas.widthC canvas.heightC |> outlined (solid black)
-  in  collage w h ([ background, boundary ] ++ os)
+      marketing = Marketing.canvasMarketing canvas
+  in  collage w h ([ background, boundary, marketing ] ++ os)
 
 uiworldInfo uiworld =
   let viewportM = uiworld.viewport.viewportM
@@ -144,7 +145,7 @@ tlInfo uiworld =
 
 happinessInfo: UIWorld -> Element
 happinessInfo uiworld = 
-  let str = "Average happiness: " ++ (show <| Happiness.average uiworld.world) ++ "."
+  let str = "Average driver happiness: " ++ (show <| Happiness.average uiworld.world) ++ "."
   in  midLeftText (col1ElWidth*2) elHeight str
 
 -- VIEWPORT CONTROLS
@@ -169,12 +170,14 @@ viewportCtrlBtnsSpecs = [
 (slowDownEl, slowDownInput) = buttonEmittingInput "Slow down" SlowDownInput
 
 simSpeedLayout uiworld = 
-  let speedString = " Current simulation speed: " ++ (show uiworld.timeMultiplier) ++ "x"
+  let speedString = "Current simulation speed: " ++ (show uiworld.timeMultiplier) ++ "x"
   in  flow right [
         container col1ElWidth elHeight midLeft <| plainText speedString, 
         size 150 elHeight speedUpEl, 
         size 150 elHeight slowDownEl
       ] 
+
+-- OTHER
 
 -- WIRE
 
@@ -196,5 +199,6 @@ layoutSignal =
                 happinessInfo uiworld,
                 tlInfo uiworld, 
                 tlSwitchEl,
-                simSpeedLayout uiworld ]
+                simSpeedLayout uiworld,
+                Marketing.footer ]
   in  layoutFn <~ tlSwitchElSig

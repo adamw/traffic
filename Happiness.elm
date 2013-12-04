@@ -2,7 +2,7 @@ module Happiness(update, average, fraction, initial) where
 
 import open Model
 
-minH = -100
+minH = -200
 maxH = 50
 borderH = -50
 updateEvery = oneSecond
